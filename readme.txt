@@ -1,5 +1,5 @@
 === DMBC Extras ===
-Contributors: (this should be a list of wordpress.org userid's)
+Contributors: sbetts
 Donate link: https://github.com/zagrev/dmbc-extras.git
 Tags: v1.0.0
 Requires at least: 4.7

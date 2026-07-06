@@ -1,7 +1,8 @@
 <?php
 /**
  * Plugin Name:       DMBC Extras
- * Plugin URI:        https://daytonmetrobarbershopchorus.com
+ * Plugin URI:        https://daytonmetrobarbershopchorus.org
+ * Requires Plugins:  plugin-update-checker
  * Description:       Adds in functionality to bind other plugins together
  *                    and perform functions necessary to running the chorus.
  * Version:           1.0.0
