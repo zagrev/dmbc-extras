@@ -2,7 +2,6 @@
 /**
  * Plugin Name:       DMBC Extras
  * Plugin URI:        https://daytonmetrobarbershopchorus.org
- * Requires Plugins:  plugin-update-checker
  * Description:       Adds in functionality to bind other plugins together
  *                    and perform functions necessary to running the chorus.
  * Version:           1.0.0
@@ -28,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require 'plugin-update-checker/plugin-update-checker.php';
+require 'plugin-update-checker-5.7/plugin-update-checker.php';
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 $myUpdateChecker = PucFactory::buildUpdateChecker(
