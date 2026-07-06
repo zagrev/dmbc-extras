@@ -41,3 +41,16 @@ $myUpdateChecker->setBranch('main');
 
 //Optional: If you're using a private repository, specify the access token like this:
 //$myUpdateChecker->setAuthentication('your-token-here');
+
+dmbc_activate()
+{
+}
+
+dmbc_deactivate()
+{
+}
+   
+register_activation_hook(__FILE__,'dmbc_activate');
+register_deactivation_hook(__FILE__,'dmbc_deactivate');
+
+
