@@ -1,0 +1,12 @@
+.git
+.github
+node_modules
+tests
+phpunit.xml
+composer.json
+composer.lock
+package.json
+package-lock.json
+webpack.config.js
+.gitignore
+.distignore

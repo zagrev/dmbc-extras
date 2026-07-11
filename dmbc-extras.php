@@ -20,7 +20,7 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 * 
 */
- */
+
 
 // Security Check: Prevent direct file access outside of WordPress
 if ( ! defined( 'ABSPATH' ) ) {
@@ -42,15 +42,17 @@ $myUpdateChecker->setBranch('main');
 //Optional: If you're using a private repository, specify the access token like this:
 //$myUpdateChecker->setAuthentication('your-token-here');
 
-dmbc_activate()
+function dmbc_activate()
 {
 }
 
-dmbc_deactivate()
+function dmbc_deactivate()
 {
 }
    
 register_activation_hook(__FILE__,'dmbc_activate');
 register_deactivation_hook(__FILE__,'dmbc_deactivate');
 
+plugin_dir = plugin_dir_path( __FILE__ )
+plugin_url = plugin_dir_url( __FILE__ )
 

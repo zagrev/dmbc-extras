@@ -1,0 +1,101 @@
+name: Create GitHub Release
+
+on:
+  push:
+    branches:
+      - main # Triggers when code is pushed or merged to main
+
+# Define variables globally for easy maintenance
+env:
+  PLUGIN_NAME: "dmbc-extras"
+  PLUGIN_PHP_FILE: "dmbc-extras.php"
+
+jobs:
+  build_release:
+    name: Build & Package Plugin
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Crucial permission for creating GitHub releases
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # Fetches all history for proper tagging
+
+      - name: Bump Version Patch Number
+        id: versioning
+        run: |
+          # 1. Fetch latest tag to determine base version. Default to 1.0.0 if none exist.
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          CLEAN_VERSION=${LATEST_TAG#v}
+          
+          # 2. Split version into major, minor, patch
+          IFS='.' read -r major minor patch <<< "$CLEAN_VERSION"
+          
+          # 3. Simple patch auto-bump (e.g., 1.0.0 -> 1.0.1)
+          # Change this logic if you prefer manual version definitions
+          NEW_PATCH=$((patch + 1))
+          NEXT_VERSION="$major.$minor.$NEW_PATCH"
+          
+          echo "NEW_VERSION=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "NEW_TAG=v$NEXT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update Version in WordPress Files
+        run: |
+          VERSION="${{ steps.versioning.outputs.NEW_VERSION }}"
+          
+          # Update the Main Plugin PHP File Header (Replace with your actual filename)
+          sed -i -E "s/(\* *Version: *)[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?/\1$VERSION/g" ${{ env.PLUGIN_PHP_FILE}}.php
+          
+          # Update the readme.txt stable tag field
+          if [ -f readme.txt ]; then
+            sed -i -E "s/(Stable tag: *)[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?/\1$VERSION/gi" readme.txt
+          fi
+
+      - name: Commit and Push Version Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@://github.com"
+          
+          # Stage the modified files
+          git add your-plugin-file.php
+          if [ -f readme.txt ]; then git add readme.txt; fi
+          
+          # Commit only if files actually changed
+          if ! git diff-index --quiet HEAD --; then
+            git commit -m "chore: bump plugin version to ${{ steps.versioning.outputs.NEW_VERSION }} [skip ci]"
+            git push origin main
+          fi
+
+      - name: Setup Node & Build Production Assets
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+            npm run build --if-present
+          fi
+
+      - name: Setup PHP & Install Composer Dependencies
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - run: |
+          if [ -f composer.json ]; then
+            composer install --no-dev --optimize-autoloader
+          fi
+
+      - name: Create Clean Distribution Folder
+        run: |
+          PLUGIN_NAME="${{ env.PLUGIN_NAME }}"
+          VERSION="${{ steps.versioning.outputs.NEW_VERSION }}"
+          mkdir -p build/$PLUGIN_NAME
+          rsync -rc --exclude-from=.distignore ./ build/$PLUGIN_NAME/ || rsync -rc ./ build/$PLUGIN_NAME/ --exclude .git --exclude node_modules
+          cd build && zip -r ../$PLUGIN_NAME.zip $PLUGIN_NAME && cd ..
+
+      - name: Generate GitHub Release and Tag
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.versioning.outputs.NEW_TAG }}
+          files: my-awesome-plugin.zip
+          generate_release_notes: true
