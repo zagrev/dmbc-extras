@@ -27,4 +27,4 @@ Contributions are welcome. Please open issues or pull requests to suggest improv
 
 ## License
 
-This project is released under the CC BY-NC-ND License.
+This project is released under the [CC BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.txt) License.
