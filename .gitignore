@@ -1,0 +1,16 @@
+../dmbc-song-library/*
+!../dmbc-song-library/.gitignore
+vendor/
+
+# Local test and generated artifacts
+.phpunit.result.cache
+
+# Editor and local build artifacts
+.vscode/
+.idea/
+*.log
+*.tmp
+*.swp
+*.swo
+.cache/
+
