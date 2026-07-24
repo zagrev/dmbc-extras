@@ -4,7 +4,7 @@
  * Plugin URI:        https://github.com/zagrev/dmbc-extras
  * Description:       Adds in functionality to bind other plugins together
  *                    and perform functions necessary to running the chorus.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Author:            Steve Betts
  * Author URI:        https://github.com/zagrev
  * License:           CC BY-NC-ND

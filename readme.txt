@@ -4,7 +4,7 @@ Donate link: https://github.com/zagrev/dmbc-extras.git
 Tags: dmbc
 Requires at least: 4.7
 Tested up to: 7.0
-Stable tag: v1.0.1
+Stable tag: v1.0.2
 Requires PHP: 7.4
 License: CC BY-NC-ND
 License URI: https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.txt
