@@ -1,20 +1,53 @@
-=== dmbc-extras ===
-Contributors: Your Name
-Tags: chorus, rehearsal, song lists, capabilities
-Requires at least: 6.4
-Tested up to: 6.6
-Stable tag: 0.1.0
+=== DMBC Extras ===
+Contributors: sbetts
+Donate link: https://github.com/zagrev/dmbc-extras.git
+Tags: dmbc
+Requires at least: 4.7
+Tested up to: 7.0
+Stable tag: v1.0.2
+Requires PHP: 7.4
 License: CC BY-NC-ND
-License URI: https://creativecommons.org/licenses/by-nc-nd/4.0/
+License URI: https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.txt
 
-Adds custom capabilities and member-focused functionality for the Dayton Metro Barbershop Chorus.
+A wordpress plugin that adds in functionality to bind other plugins together and perform functions necessary to running the chorus.
 
 == Description ==
 
-This plugin provides a lightweight WordPress extension for the Dayton Metro Barbershop Chorus to manage rehearsal song lists from the admin dashboard.
 
-== Installation ==
+== Frequently Asked Questions ==
 
-1. Upload the plugin folder to the `/wp-content/plugins/` directory.
-2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Use the Rehearsal Songs menu entry to add and manage rehearsal song lists.
+= A question that someone might have =
+
+An answer to that question.
+
+= What about foo bar? =
+
+Answer to foo bar dilemma.
+
+== Screenshots ==
+
+1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Screenshots are stored in the /assets directory.
+2. This is the second screen shot
+
+== Changelog ==
+
+= 1.0 =
+* The plugin registers itself and exists in the dashboard
+
+= 0.1 =
+* A previous version with no capabilities.
+
+== Upgrade Notice ==
+
+= 1.0 =
+Upgrade notices describe the reason a user should upgrade.  No more than 300 characters.
+
+= 0.1 =
+This version didn't work. Don't use it.
+
+
+
+1. email all the members
+1. host learning tracks
+1. sell tickets to events
+1. host misc pages

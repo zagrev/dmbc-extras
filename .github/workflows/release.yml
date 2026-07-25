@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v4
+        with:
+          php-version: 8.1
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --no-interaction
+
+      - name: Update plugin version metadata
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+          python3 - <<'PY'
+import re
+from pathlib import Path
+
+root = Path('.')
+plugin = root / 'dmbc-extras.php'
+readme = root / 'readme.txt'
+
+text = plugin.read_text(encoding='utf-8')
+text = re.sub(r'(?m)^(\s*\* Version:).*$', f'\1 {VERSION}', text)
+plugin.write_text(text, encoding='utf-8')
+
+text = readme.read_text(encoding='utf-8')
+text = re.sub(r'(?m)^(Stable tag:).*$', f'Stable tag: {VERSION}', text)
+readme.write_text(text, encoding='utf-8')
+PY
+
+      - name: Commit version bump
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add dmbc-extras.php readme.txt
+          git commit -m "Bump version to ${TAG} [skip ci]" || echo 'No changes to commit'
+
+      - name: Push version bump
+        uses: ad-m/github-push-action@v0.12.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref_name }}
+
+      - name: Create release artifact
+        run: zip -r dmbc-extras-${VERSION}.zip . -x '.git/*' '.github/*' 'vendor/*/.git/*'
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmbc-extras-${VERSION}
+          path: dmbc-extras-${VERSION}.zip
