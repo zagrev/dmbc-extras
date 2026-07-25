@@ -13,6 +13,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     strategy:
       matrix:
         php: [8.2, 8.3, 8.4, 8.5]
@@ -24,6 +33,7 @@ jobs:
         uses: shivammathur/setup-php@2.37.2
         with:
           php-version: ${{ matrix.php }}
+          extensions: mysqli, wp-cli
           tools: composer
 
       - name: Get composer cache directory
