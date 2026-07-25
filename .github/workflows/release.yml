@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   release:
@@ -25,22 +25,22 @@ jobs:
         run: |
           TAG=${GITHUB_REF#refs/tags/}
           VERSION=${TAG#v}
-          python3 - <<'PY'
-import re
-from pathlib import Path
+            python3 -c '
+            import re
+            from pathlib import Path
 
-root = Path('.')
-plugin = root / 'dmbc-extras.php'
-readme = root / 'readme.txt'
+            root = Path('.')
+            plugin = root / 'dmbc-extras.php'
+            readme = root / 'readme.txt'
 
-text = plugin.read_text(encoding='utf-8')
-text = re.sub(r'(?m)^(\s*\* Version:).*$', f'\1 {VERSION}', text)
-plugin.write_text(text, encoding='utf-8')
+            text = plugin.read_text(encoding='utf-8')
+            text = re.sub(r'(?m)^(\s*\* Version:).*$', f'\1 {VERSION}', text)
+            plugin.write_text(text, encoding='utf-8')
 
-text = readme.read_text(encoding='utf-8')
-text = re.sub(r'(?m)^(Stable tag:).*$', f'Stable tag: {VERSION}', text)
-readme.write_text(text, encoding='utf-8')
-PY
+            text = readme.read_text(encoding='utf-8')
+            text = re.sub(r'(?m)^(Stable tag:).*$', f'Stable tag: {VERSION}', text)
+            readme.write_text(text, encoding='utf-8')
+            '
 
       - name: Commit version bump
         run: |
