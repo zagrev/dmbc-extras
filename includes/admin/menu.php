@@ -7,7 +7,7 @@ function dmbc_extras_add_admin_menu() {
 	add_menu_page(
 		__( 'Rehearsal Song Lists', 'dmbc-extras' ),
 		__( 'Rehearsal Songs', 'dmbc-extras' ),
-		'manage_options',
+		'edit_song_list',
 		'dmbc-rehearsal-song-lists',
 		'dmbc_extras_render_song_lists_admin_page',
 		'dashicons-list-view',

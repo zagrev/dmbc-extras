@@ -18,18 +18,16 @@ function dmbc_extras_get_song_folder_choices() {
 	$choices = array();
 
 	foreach ( $iterator as $path ) {
-		if ( ! $path->isDir() ) {
-			continue;
+		if ( $path->isDir() and ! str_contains( $path->getpathname(), 'Archived Music' ) ) {
+
+			$normalized_path = wp_normalize_path( $path->getPathname() );
+			$relative_path   = str_replace( wp_normalize_path( $song_library_dir ) . '/', '', $normalized_path );
+
+			if ( ! empty( $relative_path ) ) {
+				$choices[ $normalized_path ] = $relative_path;
+			}
 		}
 
-		$normalized_path = wp_normalize_path( $path->getPathname() );
-		$relative_path   = str_replace( wp_normalize_path( $song_library_dir ) . '/', '', $normalized_path );
-
-		if ( empty( $relative_path ) ) {
-			continue;
-		}
-
-		$choices[ $normalized_path ] = $relative_path;
 	}
 
 	ksort( $choices, SORT_NATURAL | SORT_FLAG_CASE );
@@ -48,7 +46,7 @@ function dmbc_extras_render_song_lists_admin_page() {
 	if ( $edit_post ) {
 		$edit_title   = get_the_title( $edit_post );
 		$edit_content = get_the_excerpt( $edit_post );
-		$edit_songs   = get_post_meta( $edit_post->ID, 'dmbc_song_list_songs', true );
+		$edit_songs   = get_post_meta( $edit_post->ID, 'dmbc_song_list_songs' )[0];
 	}
 
 	if ( 'title' === $sort_value ) {
@@ -115,7 +113,7 @@ function dmbc_extras_render_song_lists_admin_page() {
 									<label for="dmbc_selected_song_folders"><?php esc_html_e( 'Selected songs', 'dmbc-extras' ); ?></label>
 									<select id="dmbc_selected_song_folders" name="dmbc_song_list_songs[]" multiple size="10" class="large-text" style="min-width: 240px;">
 										<?php foreach ( $edit_songs as $selected_song ) : ?>
-											<option value="<?php echo esc_attr( $selected_song ); ?>" selected><?php echo esc_html( $selected_song ); ?></option>
+											<option value="<?php echo esc_attr( $selected_song ); ?>" ><?php echo esc_html( $selected_song ); ?></option>
 										<?php endforeach; ?>
 									</select>
 									<p class="description"><?php esc_html_e( 'These folder names will be stored with the new song list.', 'dmbc-extras' ); ?></p>
@@ -136,6 +134,11 @@ function dmbc_extras_render_song_lists_admin_page() {
 			</table>
 			<?php submit_button( $edit_id > 0 ? __( 'Update Song List', 'dmbc-extras' ) : __( 'Create Song List', 'dmbc-extras' ) ); ?>
 		</form>
+		<form method="post" action="">
+			<?php wp_nonce_field( 'dmbc_delete_song_list', 'dmbc_song_list_delete_nonce' ); ?>
+			<input type="hidden" name="dmbc_song_list_id" value="<?php echo esc_attr( $edit_id ); ?>">
+			<?php submit_button( __( 'Delete Song List', 'dmbc-extras' ), 'delete', 'dmbc_delete_song_list', false ); ?>
+		</form>
 
 		<h2><?php esc_html_e( 'Existing Song Lists', 'dmbc-extras' ); ?></h2>
 		<form method="get" action="">
@@ -152,13 +155,9 @@ function dmbc_extras_render_song_lists_admin_page() {
 		<?php else : ?>
 			<ul>
 				<?php foreach ( $song_lists as $song_list ) : ?>
-					<?php $stored_songs = get_post_meta( $song_list->ID, 'dmbc_song_list_songs', true ); ?>
 					<li>
 						<strong><a href="<?php echo esc_url( admin_url( 'admin.php?page=dmbc-rehearsal-song-lists&dmbc_song_list_id=' . (int) $song_list->ID ) ); ?>"><?php echo esc_html( get_the_title( $song_list ) ); ?></a></strong>
 						<div><?php echo wp_kses_post( get_the_excerpt( $song_list ) ); ?></div>
-						<?php if ( is_array( $stored_songs ) && ! empty( $stored_songs ) ) : ?>
-							<div><strong><?php esc_html_e( 'Songs:', 'dmbc-extras' ); ?></strong> <?php echo esc_html( implode( ', ', $stored_songs ) ); ?></div>
-						<?php endif; ?>
 					</li>
 				<?php endforeach; ?>
 			</ul>
@@ -168,6 +167,7 @@ function dmbc_extras_render_song_lists_admin_page() {
 	jQuery( document ).ready( function ( $ ) {
 		var $available = $( '#dmbc_available_song_folders' );
 		var $selected = $( '#dmbc_selected_song_folders' );
+
 		var addSelectedToList = function () {
 			$available.find( 'option:selected' ).each( function () {
 				var $option = $( this );
@@ -191,9 +191,11 @@ function dmbc_extras_render_song_lists_admin_page() {
 		} );
 
 		$( '#dmbc_add_selected_song_folders' ).on( 'click', addSelectedToList );
+
 		$( '#dmbc_remove_selected_song_folders' ).on( 'click', function () {
 			$selected.find( 'option:selected' ).remove();
 		} );
+
 		$( '#dmbc_clear_selected_song_folders' ).on( 'click', function () {
 			$selected.find( 'option' ).remove();
 		} );
@@ -218,6 +220,10 @@ function dmbc_extras_render_song_lists_admin_page() {
 					$option.insertAfter( next );
 				}
 			} );
+		} );
+
+		$( 'form' ).on( 'submit', function () {
+			$selected.find( 'option' ).prop( 'selected', true );
 		} );
 	} );
 	</script>

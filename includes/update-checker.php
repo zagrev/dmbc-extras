@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! class_exists( 'Puc_v5_Factory' ) ) {
-	$plugin_update_checker_path = dirname( __DIR__ ) . '/vendor/autoload.php';
+	$plugin_update_checker_path = $plugin_dir . '/vendor/autoload.php';
 
 	if ( file_exists( $plugin_update_checker_path ) ) {
 		require_once $plugin_update_checker_path;
@@ -12,29 +12,34 @@ if ( ! class_exists( 'Puc_v5_Factory' ) ) {
 }
 
 function dmbc_extras_setup_update_checker() {
+	global $plugin_dir;
+
 	if ( ! class_exists( 'Puc_v5_Factory' ) ) {
-		return;
+		require $plugin_dir . 'vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
+
+		if ( ! class_exists( 'Puc_v5_Factory' ) ) {
+			return;
+		}
 	}
 
 	$github_repo = 'https://github.com/zagrev/dmbc-extras';
-	$plugin_file = dirname( __DIR__ ) . '/dmbc-extras.php';
-	$loader      = Puc_v5_Factory::buildUpdateChecker(
+	$plugin_file = $plugin_dir . '/dmbc-extras.php';
+
+	$updateChecker = Puc_v5_Factory::buildUpdateChecker(
 		$github_repo,
 		$plugin_file,
 		'dmbc-extras'
 	);
 
-	if ( method_exists( $loader, 'setBranch' ) ) {
-		$loader->setBranch( 'main' );
-	}
+	$updateChecker->setBranch( 'main' );
 
-	if ( method_exists( $loader, 'getVcsApi' ) ) {
-		$vcs_api = $loader->getVcsApi();
+	// if ( method_exists( $updateChecker, 'getVcsApi' ) ) {
+	// 	$vcs_api = $updateChecker->getVcsApi();
 
-		if ( method_exists( $vcs_api, 'enableReleaseAssets' ) ) {
-			$vcs_api->enableReleaseAssets();
-		}
-	}
+	// 	if ( method_exists( $vcs_api, 'enableReleaseAssets' ) ) {
+	// 		$vcs_api->enableReleaseAssets();
+	// 	}
+	// }
 }
 
 function dmbc_extras_allow_automatic_plugin_updates( $should_update, $item ) {

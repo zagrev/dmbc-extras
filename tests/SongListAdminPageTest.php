@@ -1,9 +1,9 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
 
-use PHPUnit\Framework\TestCase;
+use DmbcExtras\TestCase;
 
-class TestSongListAdminPage extends TestCase {
+class SongListAdminPageTest extends TestCase {
 	public function test_it_lists_available_song_folders_from_wp_content_directory() {
 		$GLOBALS['__dmbc_test_posts'] = array(
 			(object) array(
