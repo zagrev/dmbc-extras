@@ -9,8 +9,11 @@ on:
       - opened
       - synchronize
       - reopened
-    branches:
-      - main
+
+# Automatically cancel duplicate runs on the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
