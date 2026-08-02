@@ -1,23 +1,18 @@
 <?php
-require_once __DIR__ . '/bootstrap.php';
+namespace dmbc_extras\Tests;
 
-use DmbcExtras\TestCase;
+use WP_Mock;
 
-class TestSongListUpdate extends TestCase {
+class TestSongListUpdate extends WP_Mock\Tools\TestCase {
 	public function test_update_saves_selected_songs() {
-		$GLOBALS['__dmbc_test_post_lookup'] = array(
-			5 => (object) array(
-				'ID'           => 5,
-				'post_title'   => 'Existing',
-				'post_content' => 'Old',
-			),
+		$post = (object) array(
+			'ID'           => 5,
+			'post_title'   => 'Existing',
+			'post_content' => 'Old',
 		);
 
-		$GLOBALS['__dmbc_test_post_meta'] = array(
-			5 => array(
-				'dmbc_song_list_songs' => array( 'OldSong' ),
-			),
-		);
+		WP_Mock::userFunction( 'get_post', array( 'args' => array( 5 ), 'return' => $post ) );
+		WP_Mock::userFunction( 'get_post_meta', array( 'args' => array( 5, 'dmbc_song_list_songs' ), 'return' => array( array( 'OldSong' ) ) ) );
 
 		$_POST = array(
 			'dmbc_song_list_nonce'   => 'nonce',

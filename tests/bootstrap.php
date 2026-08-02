@@ -1,4 +1,7 @@
 <?php
+namespace dmbc_extras\Tests;
+use WP_Mock;
+
 // Step 1: Prevent execution if not running inside PHPUnit
 if ( ! defined( 'PHPUNIT_COMPOSER_INSTALL' ) && ! defined( '__PHPUNIT_PHAR__' ) ) {
 	exit( 'PHPUnit is required to run these tests.' );
@@ -18,6 +21,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 if ( ! defined( 'WP_CONTENT_DIR' ) ) {
 	define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content/' );
+}
+
+WP_Mock::setUsePatchwork( true );
+WP_Mock::activateStrictMode();
+WP_Mock::bootstrap();
+
+// Load simple WP function fakes for the test environment
+if ( file_exists( __DIR__ . '/wp-fakes.php' ) ) {
+	require_once __DIR__ . '/wp-fakes.php';
 }
 
 require_once dirname( __DIR__ ) . '/dmbc-extras.php';

@@ -70,7 +70,6 @@ function dmbc_extras_handle_song_list_form() {
 
 	/* Ensure selected songs are stored explicitly in post meta on updates and creates. */
 	update_post_meta( $post_id, 'dmbc_song_list_songs', $selected_songs );
-	update_post_meta( $post_id, 'dmbc_song_list_debug_post', $_POST );
 
 	clean_post_cache( $post_id );
 
