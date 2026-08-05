@@ -1,4 +1,5 @@
 <?php
+namespace dmbc_extras;
 /**
  * Plugin Name: dmbc-extras
  * Plugin URI: https://github.com/zagrev/dmbc-extras
@@ -8,9 +9,9 @@
  * Author URI: https://github.com/zagrev
  * Text Domain: dmbc-extras
  * Domain Path: /languages
- * Tested up to:7.0.2
- * Requires PHP: 8.2
- * Requires Plugins: WP Webhooks
+ * Tested up to: 7.0.2
+ * Requires PHP: 8.0 
+ * Requires Plugins: 
  * License: CC BY-NC-ND
  * License URI: https://creativecommons.org/licenses/by-nc-nd/4.0/
  *
@@ -25,35 +26,26 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
+	print 'ABSPATH is not defined. This file should not be accessed directly.' . PHP_EOL;
 	exit;
 }
-
-// // DEBUGGING
-// if ( ! defined( 'WP_DEBUG' ) || 'true' !== WP_DEBUG ) {
-// 	define( 'WP_DEBUG', true );
-// 	define( 'WP_DEBUG_LOG', true );
-// 	define( 'WP_DEBUG_DISPLAY', false );
-// 	@ini_set( 'display_errors', 0 );
-// 	error_reporting( E_ALL & ~E_DEPRECATED );
-// }
-// // END DEBUGGING
 
 $plugin_dir = plugin_dir_path( __FILE__ );
 $plugin_url = plugin_dir_url( __FILE__ );
 
-require_once $plugin_dir . '/includes/activate.php';
-require_once $plugin_dir . '/includes/deactivate.php';
-require_once $plugin_dir . '/includes/admin/song-list-form-handler.php';
-require_once $plugin_dir . '/includes/admin/song-lists-page.php';
-require_once $plugin_dir . '/includes/admin/menu.php';
-require_once $plugin_dir . '/includes/cpts/song-list-cpt.php';
-require_once $plugin_dir . '/includes/update-checker.php';
+require_once "$plugin_dir/includes/activate.php";
+require_once "$plugin_dir/includes/deactivate.php";
+require_once "$plugin_dir/includes/admin/song-list-form-handler.php";
+require_once "$plugin_dir/includes/admin/song-lists-page.php";
+require_once "$plugin_dir/includes/admin/menu.php";
+require_once "$plugin_dir/includes/cpts/song-list-cpt.php";
+require_once "$plugin_dir/includes/update-checker.php";
 
-register_activation_hook( $plugin_dir . '/includes/activate.php', 'dmbc_extras_activate' );
-register_deactivation_hook( $plugin_dir . '/includes/deactivate.php', 'dmbc_extras_deactivate' );
-register_uninstall_hook( $plugin_dir . '/includes/uninstall.php', 'dmbc_extras_uninstall' );
+\register_activation_hook( "$plugin_dir/includes/activate.php", __NAMESPACE__ . '\dmbc_extras_activate' );
+\register_deactivation_hook( "$plugin_dir/includes/deactivate.php", __NAMESPACE__ . '\dmbc_extras_deactivate' );
+\register_uninstall_hook( "$plugin_dir/includes/uninstall.php", __NAMESPACE__ . '\dmbc_extras_uninstall' );
 
-add_action( 'init', 'dmbc_extras_register_song_list_post_type' );
-add_action( 'init', 'dmbc_extras_add_custom_capabilities' );
-add_action( 'admin_menu', 'dmbc_extras_add_admin_menu' );
-add_action( 'admin_init', 'dmbc_extras_handle_song_list_form' );
+\add_action( 'init', __NAMESPACE__ . '\dmbc_extras_register_song_list_post_type' );
+\add_action( 'init', __NAMESPACE__ . '\dmbc_extras_add_custom_capabilities' );
+\add_action( 'admin_menu', __NAMESPACE__ . '\dmbc_extras_add_admin_menu' );
+\add_action( 'admin_init', __NAMESPACE__ . '\dmbc_extras_handle_song_list_form' );

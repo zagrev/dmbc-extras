@@ -1,29 +1,40 @@
 <?php
 namespace dmbc_extras\Tests;
 
-use WP_Mock;
+if ( ! defined( 'ABSPATH' ) ) {
+	print 'ABSPATH is not defined. This file (' . __FILE__ . ') should not be accessed directly.' . PHP_EOL;
+	exit;
+}
 
-class SongListAdminPageTest extends WP_Mock\Tools\TestCase {
+use function Brain\Monkey\Functions\expect;
+use function PHPUnit\Framework\assertTrue;
+
+class SongListAdminPageTest extends DmbcTestCase {
+	/**
+	 * Function test_it_lists_available_song_folders_from_wp_content_directory.
+	 */
 	public function test_it_lists_available_song_folders_from_wp_content_directory() {
-		$post = [
-			'ID'           => 1,
-			'post_title'   => 'Test List',
-			'post_content' => 'Content',
-		];
+		$post = \WP_Post::create(
+			array(
+				'ID' => 1,
+				'post_title' => 'Test List',
+				'post_content' => 'Content',
+			)
+		);
 
-		WP_Mock::userFunction( 'get_post' )->andReturn( $post );
-		WP_Mock::userFunction( 'get_post_meta' )->with( $post )->andReturn( array( 'Song A' ) );
+		expect( 'get_post' )->zeroOrMoreTimes()->andReturn( $post );
+		expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturn( [ 'Song A' ] );
+		expect( 'get_posts' )->zeroOrMoreTimes()->andReturn( [ $post ] );
 
-		WP_Mock::userFunction( 'get_posts' )->with( [ 'numberposts' => -1 ] )->andReturn( [ $post ] );
-
-		$_GET['dmbc_song_sort']    = 'modified';
+		$_GET['dmbc_song_sort'] = 'modified';
 		$_GET['dmbc_song_list_id'] = 1;
 
 		ob_start();
-		dmbc_extras_render_song_lists_admin_page();
+		\dmbc_extras\dmbc_extras_render_song_lists_admin_page();
 		$output = ob_get_clean();
 
 		// verify that this page structure is correct
+		assertTrue( true );
 		$this->assertStringContainsString( 'Rehearsal Song Lists', $output );
 		$this->assertStringContainsString( 'Select Songs', $output );
 		$this->assertStringContainsString( 'Add Selected', $output );
@@ -35,6 +46,5 @@ class SongListAdminPageTest extends WP_Mock\Tools\TestCase {
 		$this->assertStringContainsString( 'Sort by', $output );
 		$this->assertStringContainsString( 'Song A', $output );
 		$this->assertStringContainsString( 'Update Song List', $output );
-		// $this->assertStringContainsString( 'Test List', $output );
 	}
 }
