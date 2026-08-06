@@ -12,6 +12,69 @@ use function Brain\Monkey\Functions\when;
 stubEscapeFunctions();
 stubtranslationFunctions();
 
+
+class MockRole {
+	public $name;
+	public $capabilities = [];
+
+	/**
+	 * Create a mock role instance.
+	 *
+	 * @param string $role The role name.
+	 */
+	public function __construct( $role ) {
+		$this->name = $role;
+	}
+
+	/**
+	 * Add or remove a capability from the role.
+	 *
+	 * @param string $cap The capability name.
+	 * @param bool   $grant Whether to grant or revoke the capability.
+	 */
+	public function add_cap( $cap, $grant = true ) {
+		if ( ! isset( $this->capabilities[ $cap ] ) ) {
+			$this->capabilities[ $cap ] = [];
+		}
+		if ( $grant ) {
+			$this->capabilities[ $cap ][] = $this->name;
+		} else {
+			$this->capabilities[ $cap ] = array_filter( $this->capabilities[ $cap ], function ( $role ) {
+				return $role !== $this->name;
+			} );
+		}
+	}
+}
+
+
+class WP_Post {
+	public $ID;
+	public $post_title;
+	public $post_content;
+	public $post_excerpt;
+
+	/**
+	 * Create a mock WP_Post instance.
+	 *
+	 * @param array $args Post data arguments.
+	 */
+	public function __construct( $args ) {
+		$this->ID = $args['ID'] ?? 0;
+		$this->post_title = $args['post_title'] ?? '';
+		$this->post_content = $args['post_content'] ?? '';
+		$this->post_excerpt = $args['post_excerpt'] ?? '';
+	}
+
+	/**
+	 * Create a mock WP_Post instance using the provided array.
+	 *
+	 * @param mixed $args Description for $args.
+	 */
+	public static function create( $args ) {
+		return new self( $args );
+	}
+}
+
 // mock basic WordPress functions used in the plugin
 when( 'plugin_dir_path' )->justReturn( dirname( __DIR__ ) . '/' );
 
@@ -32,13 +95,13 @@ expect( 'register_uninstall_hook' )->zeroOrMoreTimes()->andReturnUsing( function
 	return true;
 } );
 
-expect( 'sanitize_text_field' )->justReturn();
+expect( 'sanitize_text_field' )->zeroOrMoreTimes()->andReturnFirstArg();
 
-when( 'wp_unslash' )->returnArg();
+expect( 'wp_unslash' )->zeroOrMoreTimes()->andReturnFirstArg();
 
-when( 'wp_kses_post' )->returnArg();
+expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnFirstArg();
 
-when( 'absint' )->returnArg();
+expect( 'absint' )->zeroOrMoreTimes()->andReturnFirstArg();
 
 expect( 'get_the_title' )->zeroOrMoreTimes()->andReturnUsing( function ( $post ) {
 	if ( $post instanceof \WP_Post ) {
@@ -91,34 +154,6 @@ expect( 'admin_url' )->zeroOrMoreTimes()->andReturnUsing( function ( $path ) {
 	return 'http://example.com/wp-admin/' . ltrim( $path, '/' );
 } );
 
-class WP_Post {
-	public $ID;
-	public $post_title;
-	public $post_content;
-	public $post_excerpt;
-
-	/**
-	 * Create a mock WP_Post instance.
-	 *
-	 * @param array $args Post data arguments.
-	 */
-	public function __construct( $args ) {
-		$this->ID = $args['ID'] ?? 0;
-		$this->post_title = $args['post_title'] ?? '';
-		$this->post_content = $args['post_content'] ?? '';
-		$this->post_excerpt = $args['post_excerpt'] ?? '';
-	}
-
-	/**
-	 * Create a mock WP_Post instance using the provided array.
-	 *
-	 * @param mixed $args Description for $args.
-	 */
-	public static function create( $args ) {
-		return new self( $args );
-	}
-}
-
 expect( '__' )->zeroOrMoreTimes()->andReturnFirstArg();
 
 // these add_action calls get us through the plugin initialization to the unit tests`
@@ -128,3 +163,4 @@ expect( 'add_action' )->times( 2 )->with( 'admin_init', \Mockery::type( 'callabl
 
 when( 'add_filter' )->justReturn( true );
 when( "clean_post_cache" )->justReturn( true );
+

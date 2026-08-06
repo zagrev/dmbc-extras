@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 use function PHPUnit\Framework\assertTrue;
 
 class SongListAdminPageTest extends DmbcTestCase {
@@ -22,9 +23,46 @@ class SongListAdminPageTest extends DmbcTestCase {
 			)
 		);
 
+		when( 'wp_unslash' )->returnArg();
+		when( 'sanitize_text_field' )->returnArg();
+		when( 'absint' )->returnArg();
+		when( 'wp_normalize_path' )->returnArg();
 		expect( 'get_post' )->zeroOrMoreTimes()->andReturn( $post );
 		expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturn( [ 'Song A' ] );
 		expect( 'get_posts' )->zeroOrMoreTimes()->andReturn( [ $post ] );
+		expect( 'get_the_title' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_object ) {
+			return $post_object->post_title ?? 'Test List';
+		} );
+		expect( 'get_the_excerpt' )->zeroOrMoreTimes()->andReturn( 'Content' );
+		expect( 'esc_html_e' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			echo $text;
+			return true;
+		} );
+		expect( '__' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
+		expect( 'wp_nonce_field' )->zeroOrMoreTimes()->andReturn( true );
+		expect( 'submit_button' )->zeroOrMoreTimes()->andReturnUsing( function ( $text = '' ) {
+			echo $text;
+			return true;
+		} );
+		expect( 'selected' )->zeroOrMoreTimes()->andReturn( true );
+		expect( 'admin_url' )->zeroOrMoreTimes()->andReturn( 'https://example.test/wp-admin/admin.php' );
+		expect( 'esc_url' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
+		expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
+		expect( 'esc_attr' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
+		expect( 'esc_html' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
+		expect( 'esc_textarea' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
 
 		$_GET['dmbc_song_sort'] = 'modified';
 		$_GET['dmbc_song_list_id'] = 1;

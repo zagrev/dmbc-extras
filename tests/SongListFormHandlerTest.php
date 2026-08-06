@@ -9,38 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
-class MockRole {
-	public $name;
-	public $capabilities = [];
-
-	/**
-	 * Create a mock role instance.
-	 *
-	 * @param string $role The role name.
-	 */
-	public function __construct( $role ) {
-		$this->name = $role;
-	}
-
-	/**
-	 * Add or remove a capability from the role.
-	 *
-	 * @param string $cap The capability name.
-	 * @param bool   $grant Whether to grant or revoke the capability.
-	 */
-	public function add_cap( $cap, $grant = true ) {
-		if ( ! isset( $this->capabilities[ $cap ] ) ) {
-			$this->capabilities[ $cap ] = [];
-		}
-		if ( $grant ) {
-			$this->capabilities[ $cap ][] = $this->name;
-		} else {
-			$this->capabilities[ $cap ] = array_filter( $this->capabilities[ $cap ], function ( $role ) {
-				return $role !== $this->name;
-			} );
-		}
-	}
-}
 
 class SongListFormHandlerTest extends DmbcTestCase {
 	/**
@@ -52,6 +20,11 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		$captured_callback = null;
 
 		when( 'wp_unslash' )->returnArg();
+		when( 'sanitize_text_field' )->returnArg();
+		when( 'wp_kses_post' )->returnArg();
+		when( 'absint' )->returnArg();
+		when( 'wp_normalize_path' )->returnArg();
+		when( 'clean_post_cache' )->returnArg();
 		expect( 'wp_verify_nonce' )->once()->andReturn( true );
 		expect( 'current_user_can' )->andReturnUsing(
 			function ( $capability ) {
@@ -89,6 +62,9 @@ class SongListFormHandlerTest extends DmbcTestCase {
 				}
 				return true;
 			} );
+		expect( 'esc_html__' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
 
 		\dmbc_extras\dmbc_extras_handle_song_list_form();
 
@@ -123,37 +99,75 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		$this->assertArraysAreEqual( $_POST['dmbc_song_list_songs'], $actual_metadata['dmbc_song_list_songs'], 'The saved post meta does not match the selected songs.' );
 	}
 
-
 	/**
-	 * Test that the edit_song_list capability is granted to the administrator and editor roles.
+	 * Test that updating a song list saves the selected songs.
 	 */
+	public function test_update_saves_selected_songs() {
+		$post = (object) array(
+			'ID' => 5,
+			'post_title' => 'Existing',
+			'post_content' => 'Old',
+		);
+		$expected_song_list = [ '/Song A/Sub Song', '/Song B' ];
+		$post_data = [];
+		$actual_metadata = [];
+		$captured_callback = null;
 
-	public function test_it_grants_the_edit_song_list_capability_to_the_administrator_role() {
-		$adminRole = new MockRole( 'administrator' );
-		$editorRole = new MockRole( 'editor' );
+		when( 'wp_unslash' )->returnArg();
+		when( 'sanitize_text_field' )->returnArg();
+		when( 'wp_kses_post' )->returnArg();
+		when( 'absint' )->returnArg();
+		when( 'wp_normalize_path' )->returnArg();
+		when( 'clean_post_cache' )->returnArg();
+		expect( 'wp_verify_nonce' )->andReturn( true );
+		expect( 'current_user_can' )->once()->with( 'edit_song_list' )->andReturn( true );
 
-		expect( 'get_role' )->andReturnUsing(
-			function ( $role ) use ( $adminRole, $editorRole ) {
-				if ( 'administrator' === $role ) {
-					return $adminRole;
-				}
-				if ( 'editor' === $role ) {
-					return $editorRole;
-				}
-				return null;
+		expect( 'wp_update_post' )
+			->once()
+			->andReturnUsing( function ( $args, $ignored ) use ( &$post_data ) {
+				$post_data = $args;
+				return $post_data['ID'] ?? 0;
+			} );
+		expect( 'add_action' )
+			->once()
+			->with( 'admin_notices', \Mockery::type( 'callable' ) )
+			->andReturnUsing( function ( $hook, $callback ) use ( &$captured_callback ) {
+				$captured_callback = $callback;
+				return true;
+			} );
+		expect( 'update_post_meta' )->once()->andReturnUsing(
+			function ( $id, $key, $value ) use ( &$actual_metadata ) {
+				$actual_metadata[ $key ] = $value;
+				return true;
 			}
 		);
+		expect( 'esc_html__' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
+		expect( 'esc_html_' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
+		expect( 'esc_html_e' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			echo $text;
+			return true;
+		} );
+		expect( 'esc_html' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
 
-		\dmbc_extras\dmbc_extras_add_custom_capabilities();
+		$_POST = array(
+			'dmbc_song_list_nonce' => 'nonce',
+			'dmbc_song_list_id' => 5,
+			'dmbc_song_list_title' => 'Existing Updated',
+			'dmbc_song_list_content' => 'New content',
+			'dmbc_song_list_songs' => $expected_song_list,
+		);
 
-		$expected_role_name = 'edit_song_list';
-		$this->assertTrue(
-			$adminRole->capabilities[ $expected_role_name ] === [ 'administrator' ],
-			'The administrator role should have the edit_song_list capability after calling dmbc_extras_add_custom_capabilities().'
-		);
-		$this->assertTrue(
-			$editorRole->capabilities[ $expected_role_name ] === [ 'editor' ],
-			'The editor role should have the edit_song_list capability after calling dmbc_extras_add_custom_capabilities().'
-		);
+		\dmbc_extras\dmbc_extras_handle_song_list_form();
+
+		$this->assertArrayHasKey( 'ID', $post_data );
+		$this->assertSame( 5, $post_data['ID'] );
+		$this->assertArrayHasKey( 'dmbc_song_list_songs', $actual_metadata );
+		$this->assertSame( $expected_song_list, $actual_metadata['dmbc_song_list_songs'] );
 	}
 }

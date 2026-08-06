@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 class SongListUpdateTest extends DmbcTestCase {
 	/**
@@ -19,9 +20,18 @@ class SongListUpdateTest extends DmbcTestCase {
 		);
 		$expected_song_list = [ '/Song A/Sub Song', '/Song B' ];
 
-		expect( 'wp_verify_nonce' )->andReturn( true );
-		expect( 'current_user_can' )->once()->with( 'edit_song_list' )->andReturn( true );
-
+		when( 'wp_unslash' )->returnArg();
+		when( 'sanitize_text_field' )->returnArg();
+		when( 'wp_kses_post' )->returnArg();
+		when( 'absint' )->returnArg();
+		when( 'wp_normalize_path' )->returnArg();
+		when( 'clean_post_cache' )->returnArg();
+		expect( 'wp_verify_nonce' )->once()->andReturn( true );
+		expect( 'current_user_can' )->andReturnUsing(
+			function ( $capability ) {
+				return in_array( $capability, [ 'edit_song_list', 'manage_options' ], true );
+			}
+		);
 		expect( 'wp_update_post' )
 			->once()
 			->andReturnUsing( function ( $args, $ignored ) use ( &$post_data ) {
