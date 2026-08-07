@@ -13,6 +13,13 @@ class SongListUpdateTest extends DmbcTestCase {
 	 * Test that updating a song list saves the selected songs.
 	 */
 	public function test_update_saves_selected_songs() {
+
+		// set up the default song list directory for the test
+		$default_song_list_directory = 'test-song-library';
+		if ( ! is_dir( WP_CONTENT_DIR . '/' . $default_song_list_directory ) ) {
+			mkdir( WP_CONTENT_DIR . '/' . $default_song_list_directory, 0644, true );
+		}
+
 		$post = (object) array(
 			'ID' => 5,
 			'post_title' => 'Existing',
@@ -20,11 +27,11 @@ class SongListUpdateTest extends DmbcTestCase {
 		);
 		$expected_song_list = [ '/Song A/Sub Song', '/Song B' ];
 
-		// when( 'wp_unslash' )->returnArg();
-		// when( 'sanitize_text_field' )->returnArg();
-		// when( 'wp_kses_post' )->returnArg();
-		// when( 'absint' )->returnArg();
-		// when( 'wp_normalize_path' )->returnArg();
+		when( 'wp_unslash' )->returnArg();
+		when( 'sanitize_text_field' )->returnArg();
+		when( 'wp_kses_post' )->returnArg();
+		when( 'absint' )->returnArg();
+		when( 'wp_normalize_path' )->returnArg();
 		when( 'clean_post_cache' )->returnArg();
 		expect( 'wp_verify_nonce' )->once()->andReturn( true );
 		expect( 'current_user_can' )->andReturnUsing(
@@ -54,7 +61,7 @@ class SongListUpdateTest extends DmbcTestCase {
 				$actual_metadata[ $key ] = $value;
 				return $key;
 			} );
-		expect( 'get_option' )->andReturn( 'dmbc-song-library-test' );
+		expect( 'get_option' )->andReturn( $default_song_list_directory );
 
 		$_POST = array(
 			'dmbc_song_list_nonce' => 'nonce',
