@@ -16,4 +16,13 @@ function dmbc_extras_add_admin_menu() {
 		'dashicons-list-view',
 		25
 	);
+
+	add_submenu_page(
+		'options-general.php',
+		__( 'DMBC Extras', 'dmbc-extras' ),
+		__( 'DMBC Extras', 'dmbc-extras' ),
+		'manage_options',
+		'dmbc-extras-settings',
+		__NAMESPACE__ . '\dmbc_extras_render_settings_page'
+	);
 }

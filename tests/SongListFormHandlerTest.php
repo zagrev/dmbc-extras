@@ -19,12 +19,19 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		$post_data = [];
 		$captured_callback = null;
 
-		when( 'wp_unslash' )->returnArg();
-		when( 'sanitize_text_field' )->returnArg();
-		when( 'wp_kses_post' )->returnArg();
-		when( 'absint' )->returnArg();
-		when( 'wp_normalize_path' )->returnArg();
-		when( 'clean_post_cache' )->returnArg();
+		expect( 'wp_unslash' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'sanitize_text_field' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'absint' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'wp_normalize_path' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'clean_post_cache' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'get_option' )->zeroOrMoreTimes()->andReturn( 'dmbc-song-library' );
 		expect( 'wp_verify_nonce' )->once()->andReturn( true );
 		expect( 'current_user_can' )->andReturnUsing(
 			function ( $capability ) {
@@ -113,12 +120,19 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		$actual_metadata = [];
 		$captured_callback = null;
 
-		when( 'wp_unslash' )->returnArg();
-		when( 'sanitize_text_field' )->returnArg();
-		when( 'wp_kses_post' )->returnArg();
-		when( 'absint' )->returnArg();
-		when( 'wp_normalize_path' )->returnArg();
-		when( 'clean_post_cache' )->returnArg();
+		expect( 'wp_unslash' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'sanitize_text_field' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'absint' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'wp_normalize_path' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'clean_post_cache' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'get_option' )->zeroOrMoreTimes()->andReturn( 'dmbc-song-library' );
 		expect( 'wp_verify_nonce' )->andReturn( true );
 		expect( 'current_user_can' )->once()->with( 'edit_song_list' )->andReturn( true );
 
@@ -169,5 +183,45 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		$this->assertSame( 5, $post_data['ID'] );
 		$this->assertArrayHasKey( 'dmbc_song_list_songs', $actual_metadata );
 		$this->assertSame( $expected_song_list, $actual_metadata['dmbc_song_list_songs'] );
+	}
+
+	public function test_it_deletes_a_song_list_when_requested() {
+		$captured_callback = null;
+
+		expect( 'wp_unslash' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'sanitize_text_field' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'absint' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return $value; } );
+		expect( 'wp_verify_nonce' )->once()->with( 'delete-nonce', 'dmbc_delete_song_list' )->andReturn( true );
+		expect( 'current_user_can' )->andReturnUsing( function ( $capability ) {
+			return in_array( $capability, [ 'edit_song_list', 'manage_options' ], true );
+		} );
+		expect( 'wp_delete_post' )->once()->with( 42, true )->andReturn( true );
+		expect( 'add_action' )
+			->once()
+			->with( 'admin_notices', \Mockery::type( 'callable' ) )
+			->andReturnUsing( function ( $hook, $callback ) use ( &$captured_callback ) {
+				$captured_callback = $callback;
+				return true;
+			} );
+		expect( 'esc_html__' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
+			return $text;
+		} );
+
+		$_POST = array(
+			'dmbc_delete_song_list' => '1',
+			'dmbc_song_list_id' => 42,
+			'dmbc_song_list_delete_nonce' => 'delete-nonce',
+		);
+
+		\dmbc_extras\dmbc_extras_handle_song_list_form();
+
+		$this->assertNotNull( $captured_callback, 'The delete admin notice callback was not registered.' );
+		ob_start();
+		$captured_callback();
+		$output = ob_get_clean();
+		$this->assertStringContainsString( 'deleted', $output );
 	}
 }

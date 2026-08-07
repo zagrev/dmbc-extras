@@ -35,6 +35,7 @@ $plugin_url = plugin_dir_url( __FILE__ );
 
 require_once "$plugin_dir/includes/activate.php";
 require_once "$plugin_dir/includes/deactivate.php";
+require_once "$plugin_dir/includes/admin/settings.php";
 require_once "$plugin_dir/includes/admin/song-list-form-handler.php";
 require_once "$plugin_dir/includes/admin/song-lists-page.php";
 require_once "$plugin_dir/includes/admin/menu.php";
@@ -48,4 +49,5 @@ require_once "$plugin_dir/includes/update-checker.php";
 \add_action( 'init', __NAMESPACE__ . '\dmbc_extras_register_song_list_post_type' );
 \add_action( 'init', __NAMESPACE__ . '\dmbc_extras_add_custom_capabilities' );
 \add_action( 'admin_menu', __NAMESPACE__ . '\dmbc_extras_add_admin_menu' );
+\add_action( 'admin_init', __NAMESPACE__ . '\dmbc_extras_register_settings' );
 \add_action( 'admin_init', __NAMESPACE__ . '\dmbc_extras_handle_song_list_form' );

@@ -20,11 +20,11 @@ class SongListUpdateTest extends DmbcTestCase {
 		);
 		$expected_song_list = [ '/Song A/Sub Song', '/Song B' ];
 
-		when( 'wp_unslash' )->returnArg();
-		when( 'sanitize_text_field' )->returnArg();
-		when( 'wp_kses_post' )->returnArg();
-		when( 'absint' )->returnArg();
-		when( 'wp_normalize_path' )->returnArg();
+		// when( 'wp_unslash' )->returnArg();
+		// when( 'sanitize_text_field' )->returnArg();
+		// when( 'wp_kses_post' )->returnArg();
+		// when( 'absint' )->returnArg();
+		// when( 'wp_normalize_path' )->returnArg();
 		when( 'clean_post_cache' )->returnArg();
 		expect( 'wp_verify_nonce' )->once()->andReturn( true );
 		expect( 'current_user_can' )->andReturnUsing(
@@ -54,6 +54,7 @@ class SongListUpdateTest extends DmbcTestCase {
 				$actual_metadata[ $key ] = $value;
 				return $key;
 			} );
+		expect( 'get_option' )->andReturn( 'dmbc-song-library-test' );
 
 		$_POST = array(
 			'dmbc_song_list_nonce' => 'nonce',

@@ -159,8 +159,9 @@ expect( '__' )->zeroOrMoreTimes()->andReturnFirstArg();
 // these add_action calls get us through the plugin initialization to the unit tests`
 expect( 'add_action' )->times( 2 )->with( 'init', \Mockery::type( 'callable' ) )->andReturn( true );
 expect( 'add_action' )->times( 1 )->with( 'admin_menu', \Mockery::type( 'callable' ) )->andReturn( true );
-expect( 'add_action' )->times( 2 )->with( 'admin_init', \Mockery::type( 'callable' ) )->andReturn( true );
+expect( 'add_action' )->times( 3 )->with( 'admin_init', \Mockery::type( 'callable' ) )->andReturn( true );
 
 when( 'add_filter' )->justReturn( true );
 when( "clean_post_cache" )->justReturn( true );
+when( 'get_option' )->justReturn( 'dmbc-song-library' );
 

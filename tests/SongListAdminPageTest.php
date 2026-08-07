@@ -63,6 +63,7 @@ class SongListAdminPageTest extends DmbcTestCase {
 		expect( 'esc_textarea' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
 			return $text;
 		} );
+		expect( 'get_option' )->zeroOrMoreTimes()->andReturn( 'dmbc-song-library' );
 
 		$_GET['dmbc_song_sort'] = 'modified';
 		$_GET['dmbc_song_list_id'] = 1;
@@ -84,5 +85,28 @@ class SongListAdminPageTest extends DmbcTestCase {
 		$this->assertStringContainsString( 'Sort by', $output );
 		$this->assertStringContainsString( 'Song A', $output );
 		$this->assertStringContainsString( 'Update Song List', $output );
+	}
+
+	public function test_it_returns_the_configured_song_library_directory() {
+		expect( 'get_option' )->once()->with( 'dmbc_extras_song_library_directory', 'dmbc-song-library' )->andReturn( 'custom-library' );
+
+		$this->assertSame( 'custom-library', \dmbc_extras\dmbc_extras_get_song_library_directory_option() );
+	}
+
+	public function test_it_lists_subdirectories_for_the_wp_content_browser() {
+		$directory = sys_get_temp_dir() . '/dmbc-extras-browser-' . uniqid( '', true );
+		$nested_directory = $directory . '/nested';
+		mkdir( $nested_directory, 0777, true );
+
+		when( 'wp_normalize_path' )->returnArg();
+
+		$choices = \dmbc_extras\dmbc_extras_get_wp_content_folder_choices( $directory );
+		$normalized_directory = str_replace( '\\', '/', $nested_directory );
+
+		$this->assertArrayHasKey( $normalized_directory, $choices );
+		$this->assertSame( 'nested', $choices[ $normalized_directory ] );
+
+		rmdir( $nested_directory );
+		rmdir( $directory );
 	}
 }
