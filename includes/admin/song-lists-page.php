@@ -1,35 +1,36 @@
 <?php
+namespace dmbc_extras;
+
 if ( ! defined( 'ABSPATH' ) ) {
+	print 'ABSPATH is not defined. This file (' . __FILE__ . ') should not be accessed directly.' . PHP_EOL;
 	exit;
 }
 
 function dmbc_extras_get_song_folder_choices() {
-	$song_library_dir = WP_CONTENT_DIR . '/dmbc-song-library';
+	$song_library_dir = dmbc_extras_get_song_library_directory_path();
 
 	if ( ! is_dir( $song_library_dir ) ) {
 		return array();
 	}
 
-	$iterator = new RecursiveIteratorIterator(
-		new RecursiveDirectoryIterator( $song_library_dir, RecursiveDirectoryIterator::SKIP_DOTS ),
-		RecursiveIteratorIterator::SELF_FIRST
+	$iterator = new \RecursiveIteratorIterator(
+		new \RecursiveDirectoryIterator( $song_library_dir, \RecursiveDirectoryIterator::SKIP_DOTS ),
+		\RecursiveIteratorIterator::SELF_FIRST
 	);
 
 	$choices = array();
 
 	foreach ( $iterator as $path ) {
-		if ( ! $path->isDir() ) {
-			continue;
+		if ( $path->isDir() and ! \str_contains( $path->getpathname(), 'Archived Music' ) ) {
+
+			$normalized_path = \wp_normalize_path( $path->getPathname() );
+			$relative_path = \str_replace( \wp_normalize_path( $song_library_dir ) . '/', '', $normalized_path );
+
+			if ( ! empty( $relative_path ) ) {
+				$choices[ $normalized_path ] = $relative_path;
+			}
 		}
 
-		$normalized_path = wp_normalize_path( $path->getPathname() );
-		$relative_path   = str_replace( wp_normalize_path( $song_library_dir ) . '/', '', $normalized_path );
-
-		if ( empty( $relative_path ) ) {
-			continue;
-		}
-
-		$choices[ $normalized_path ] = $relative_path;
 	}
 
 	ksort( $choices, SORT_NATURAL | SORT_FLAG_CASE );
@@ -37,36 +38,41 @@ function dmbc_extras_get_song_folder_choices() {
 	return $choices;
 }
 
+/**
+ * Renders the rehearsal song lists admin page.
+ *
+ * @return void
+ */
 function dmbc_extras_render_song_lists_admin_page() {
-	$sort_value   = isset( $_GET['dmbc_song_sort'] ) ? sanitize_text_field( wp_unslash( $_GET['dmbc_song_sort'] ) ) : 'modified';
-	$edit_id      = isset( $_GET['dmbc_song_list_id'] ) ? absint( wp_unslash( $_GET['dmbc_song_list_id'] ) ) : 0;
-	$edit_post    = $edit_id > 0 ? get_post( $edit_id ) : null;
-	$edit_title   = '';
+	$sort_value = isset( $_GET['dmbc_song_sort'] ) ? \sanitize_text_field( \wp_unslash( $_GET['dmbc_song_sort'] ) ) : 'modified';
+	$edit_id = isset( $_GET['dmbc_song_list_id'] ) ? \absint( \wp_unslash( $_GET['dmbc_song_list_id'] ) ) : 0;
+	$edit_post = $edit_id > 0 ? \get_post( $edit_id ) : null;
+	$edit_title = '';
 	$edit_content = '';
-	$edit_songs   = array();
+	$edit_songs = [];
 
 	if ( $edit_post ) {
-		$edit_title   = get_the_title( $edit_post );
-		$edit_content = get_the_excerpt( $edit_post );
-		$edit_songs   = get_post_meta( $edit_post->ID, 'dmbc_song_list_songs', true );
+		$edit_title = \get_the_title( $edit_post );
+		$edit_content = \get_the_excerpt( $edit_post );
+		$edit_songs = \get_post_meta( $edit_post->ID, 'dmbc_song_list_songs' )[0];
 	}
 
 	if ( 'title' === $sort_value ) {
 		$orderby = 'title';
-		$order   = 'ASC';
+		$order = 'ASC';
 	} else {
 		$orderby = 'modified';
-		$order   = 'DESC';
+		$order = 'DESC';
 	}
 
-	$song_lists   = get_posts(
-		array(
-			'post_type'   => 'dmbc_song_list',
+	$song_lists = \get_posts(
+		[
+			'post_type' => 'dmbc_song_list',
 			'post_status' => 'publish',
 			'numberposts' => 20,
-			'orderby'     => $orderby,
-			'order'       => $order,
-		)
+			'orderby' => $orderby,
+			'order' => $order,
+		]
 	);
 	$song_folders = dmbc_extras_get_song_folder_choices();
 	?>
@@ -74,16 +80,18 @@ function dmbc_extras_render_song_lists_admin_page() {
 		<h1><?php esc_html_e( 'Rehearsal Song Lists', 'dmbc-extras' ); ?></h1>
 
 		<form method="post" action="">
-			<?php wp_nonce_field( 'dmbc_create_song_list', 'dmbc_song_list_nonce' ); ?>
+			<?php \wp_nonce_field( 'dmbc_create_song_list', 'dmbc_song_list_nonce' ); ?>
 			<input type="hidden" name="dmbc_song_list_id" value="<?php echo esc_attr( $edit_id ); ?>">
 			<table class="form-table" role="presentation">
 				<tbody>
 					<tr>
 						<th scope="row">
-							<label for="dmbc_song_list_title"><?php esc_html_e( 'Song List Title', 'dmbc-extras' ); ?></label>
+							<label
+								for="dmbc_song_list_title"><?php esc_html_e( 'Song List Title', 'dmbc-extras' ); ?></label>
 						</th>
 						<td>
-							<input type="text" id="dmbc_song_list_title" name="dmbc_song_list_title" class="regular-text" value="<?php echo esc_attr( $edit_title ); ?>" required>
+							<input type="text" id="dmbc_song_list_title" name="dmbc_song_list_title" class="regular-text"
+								value="<?php echo esc_attr( $edit_title ); ?>" required>
 						</td>
 					</tr>
 					<tr>
@@ -92,134 +100,184 @@ function dmbc_extras_render_song_lists_admin_page() {
 						</th>
 						<td>
 							<?php if ( empty( $song_folders ) ) : ?>
-								<p class="description"><?php esc_html_e( 'Create folders inside wp-content/dmbc-song-library to populate this selector.', 'dmbc-extras' ); ?></p>
+								<p class="description">
+									<?php echo esc_html( sprintf( __( 'Create folders inside %s to populate this selector.', 'dmbc-extras' ), dmbc_extras_get_song_library_directory_path() ) ); ?>
+								</p>
 							<?php else : ?>
-							<div style="display:flex; gap:12px; align-items:flex-start;">
-								<div>
-									<label for="dmbc_available_song_folders"><?php esc_html_e( 'Available songs', 'dmbc-extras' ); ?></label>
-									<select id="dmbc_available_song_folders" multiple size="10" class="large-text" style="min-width: 240px;">
-										<?php foreach ( $song_folders as $song_path => $song_label ) : ?>
-											<option value="<?php echo esc_attr( $song_path ); ?>"><?php echo esc_html( $song_label ); ?></option>
-										<?php endforeach; ?>
-									</select>
-									<p class="description"><?php esc_html_e( 'Double-click a folder to add it, or use multi-select and click Add Selected.', 'dmbc-extras' ); ?></p>
+								<div style="display:flex; gap:12px; align-items:flex-start;">
+									<div>
+										<label
+											for="dmbc_available_song_folders"><?php esc_html_e( 'Available songs', 'dmbc-extras' ); ?></label>
+										<select id="dmbc_available_song_folders" multiple size="10" class="large-text"
+											style="min-width: 240px;">
+											<?php foreach ( $song_folders as $song_path => $song_label ) : ?>
+												<option value="<?php echo esc_attr( $song_path ); ?>">
+													<?php echo esc_html( $song_label ); ?>
+												</option>
+											<?php endforeach; ?>
+										</select>
+										<p class="description">
+											<?php esc_html_e( 'Double-click a folder to add it, or use multi-select and click Add Selected.', 'dmbc-extras' ); ?>
+										</p>
+									</div>
+									<div style="display:flex; flex-direction:column; gap:8px; padding-top:24px;">
+										<button type="button" id="dmbc_add_selected_song_folders"
+											class="button button-secondary"><?php \esc_html_e( 'Add Selected', 'dmbc-extras' ); ?></button>
+										<button type="button" id="dmbc_remove_selected_song_folders"
+											class="button button-secondary"><?php \esc_html_e( 'Remove Selected', 'dmbc-extras' ); ?></button>
+										<button type="button" id="dmbc_clear_selected_song_folders"
+											class="button button-secondary"><?php \esc_html_e( 'Clear All', 'dmbc-extras' ); ?></button>
+										<button type="button" id="dmbc_move_up_selected_song_folders"
+											class="button button-secondary"><?php \esc_html_e( 'Move Up', 'dmbc-extras' ); ?></button>
+										<button type="button" id="dmbc_move_down_selected_song_folders"
+											class="button button-secondary"><?php \esc_html_e( 'Move Down', 'dmbc-extras' ); ?></button>
+									</div>
+									<div>
+										<label
+											for="dmbc_selected_song_folders"><?php \esc_html_e( 'Selected songs', 'dmbc-extras' ); ?></label>
+										<select id="dmbc_selected_song_folders" name="dmbc_song_list_songs[]" multiple size="10"
+											class="large-text" style="min-width: 240px;">
+											<?php foreach ( $edit_songs as $selected_song ) : ?>
+												<option value="<?php echo esc_attr( $selected_song ); ?>">
+													<?php echo esc_html( $selected_song ); ?>
+												</option>
+											<?php endforeach; ?>
+										</select>
+										<p class="description">
+											<?php \esc_html_e( 'These folder names will be stored with the new song list.', 'dmbc-extras' ); ?>
+										</p>
+									</div>
 								</div>
-								<div style="display:flex; flex-direction:column; gap:8px; padding-top:24px;">
-									<button type="button" id="dmbc_add_selected_song_folders" class="button button-secondary"><?php esc_html_e( 'Add Selected', 'dmbc-extras' ); ?></button>
-									<button type="button" id="dmbc_remove_selected_song_folders" class="button button-secondary"><?php esc_html_e( 'Remove Selected', 'dmbc-extras' ); ?></button>
-									<button type="button" id="dmbc_clear_selected_song_folders" class="button button-secondary"><?php esc_html_e( 'Clear All', 'dmbc-extras' ); ?></button>
-									<button type="button" id="dmbc_move_up_selected_song_folders" class="button button-secondary"><?php esc_html_e( 'Move Up', 'dmbc-extras' ); ?></button>
-									<button type="button" id="dmbc_move_down_selected_song_folders" class="button button-secondary"><?php esc_html_e( 'Move Down', 'dmbc-extras' ); ?></button>
-								</div>
-								<div>
-									<label for="dmbc_selected_song_folders"><?php esc_html_e( 'Selected songs', 'dmbc-extras' ); ?></label>
-									<select id="dmbc_selected_song_folders" name="dmbc_song_list_songs[]" multiple size="10" class="large-text" style="min-width: 240px;">
-										<?php foreach ( $edit_songs as $selected_song ) : ?>
-											<option value="<?php echo esc_attr( $selected_song ); ?>" selected><?php echo esc_html( $selected_song ); ?></option>
-										<?php endforeach; ?>
-									</select>
-									<p class="description"><?php esc_html_e( 'These folder names will be stored with the new song list.', 'dmbc-extras' ); ?></p>
-								</div>
-							</div>
 							<?php endif; ?>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="dmbc_song_list_content"><?php esc_html_e( 'Songs / Notes', 'dmbc-extras' ); ?></label>
+							<label
+								for="dmbc_song_list_content"><?php \esc_html_e( 'Songs / Notes', 'dmbc-extras' ); ?></label>
 						</th>
 						<td>
-							<textarea id="dmbc_song_list_content" name="dmbc_song_list_content" rows="8" class="large-text"><?php echo esc_textarea( $edit_content ); ?></textarea>
+							<textarea id="dmbc_song_list_content" name="dmbc_song_list_content" rows="8"
+								class="large-text"><?php echo \esc_textarea( $edit_content ); ?></textarea>
 						</td>
 					</tr>
 				</tbody>
 			</table>
-			<?php submit_button( $edit_id > 0 ? __( 'Update Song List', 'dmbc-extras' ) : __( 'Create Song List', 'dmbc-extras' ) ); ?>
+			<?php \submit_button( $edit_id > 0 ? __( 'Update Song List', 'dmbc-extras' ) : __( 'Create Song List', 'dmbc-extras' ) ); ?>
 		</form>
+		<div style="display:flex; justify-content:flex-end; margin-top:16px;">
+			<form method="post" action="" id="dmbc_delete_song_list_form">
+				<?php \wp_nonce_field( 'dmbc_delete_song_list', 'dmbc_song_list_delete_nonce' ); ?>
+				<input type="hidden" name="dmbc_song_list_id" value="<?php echo esc_attr( $edit_id ); ?>">
+				<?php $delete_button_attributes = $edit_id > 0 ? 'style="background-color:#d63638 !important; border-color:#d63638 !important; color:#fff !important; padding:0.75rem 1.25rem; font-size:1rem;"' : 'disabled style="padding:0.75rem 1.25rem; font-size:1rem;"';
+				\submit_button(
+					__( 'Delete Song List', 'dmbc-extras' ),
+					'warn large danger btn-danger',
+					'dmbc_delete_song_list',
+					false,
+					$delete_button_attributes
+				); ?>
+			</form>
+		</div>
 
 		<h2><?php esc_html_e( 'Existing Song Lists', 'dmbc-extras' ); ?></h2>
 		<form method="get" action="">
 			<input type="hidden" name="page" value="dmbc-rehearsal-song-lists">
 			<label for="dmbc_song_sort"><?php esc_html_e( 'Sort by', 'dmbc-extras' ); ?></label>
 			<select id="dmbc_song_sort" name="dmbc_song_sort">
-				<option value="title" <?php selected( $sort_value, 'title' ); ?>><?php esc_html_e( 'Name', 'dmbc-extras' ); ?></option>
-				<option value="modified" <?php selected( $sort_value, 'modified' ); ?>><?php esc_html_e( 'Update Date', 'dmbc-extras' ); ?></option>
+				<option value="title" <?php \selected( $sort_value, 'title' ); ?>>
+					<?php \esc_html_e( 'Name', 'dmbc-extras' ); ?>
+				</option>
+				<option value="modified" <?php \selected( $sort_value, 'modified' ); ?>>
+					<?php \esc_html_e( 'Update Date', 'dmbc-extras' ); ?>
+				</option>
 			</select>
-			<?php submit_button( __( 'Apply', 'dmbc-extras' ), 'secondary', '', false ); ?>
+			<?php \submit_button( __( 'Apply', 'dmbc-extras' ), 'secondary', '', false ); ?>
 		</form>
 		<?php if ( empty( $song_lists ) ) : ?>
-			<p><?php esc_html_e( 'No rehearsal song lists yet.', 'dmbc-extras' ); ?></p>
+			<p><?php \esc_html_e( 'No rehearsal song lists yet.', 'dmbc-extras' ); ?></p>
 		<?php else : ?>
 			<ul>
 				<?php foreach ( $song_lists as $song_list ) : ?>
-					<?php $stored_songs = get_post_meta( $song_list->ID, 'dmbc_song_list_songs', true ); ?>
 					<li>
-						<strong><a href="<?php echo esc_url( admin_url( 'admin.php?page=dmbc-rehearsal-song-lists&dmbc_song_list_id=' . (int) $song_list->ID ) ); ?>"><?php echo esc_html( get_the_title( $song_list ) ); ?></a></strong>
-						<div><?php echo wp_kses_post( get_the_excerpt( $song_list ) ); ?></div>
-						<?php if ( is_array( $stored_songs ) && ! empty( $stored_songs ) ) : ?>
-							<div><strong><?php esc_html_e( 'Songs:', 'dmbc-extras' ); ?></strong> <?php echo esc_html( implode( ', ', $stored_songs ) ); ?></div>
-						<?php endif; ?>
+						<strong><a
+								href="<?php echo \esc_url( \admin_url( 'admin.php?page=dmbc-rehearsal-song-lists&dmbc_song_list_id=' . (int) $song_list->ID ) ); ?>"><?php echo \esc_html( \get_the_title( $song_list ) ); ?></a></strong>
+						<div><?php echo \wp_kses_post( \get_the_excerpt( $song_list ) ); ?></div>
 					</li>
 				<?php endforeach; ?>
 			</ul>
 		<?php endif; ?>
 	</div>
 	<script>
-	jQuery( document ).ready( function ( $ ) {
-		var $available = $( '#dmbc_available_song_folders' );
-		var $selected = $( '#dmbc_selected_song_folders' );
-		var addSelectedToList = function () {
-			$available.find( 'option:selected' ).each( function () {
-				var $option = $( this );
-				if ( $selected.find( 'option[value="' + $option.val() + '"]' ).length ) {
+		var dmbcDeleteConfirmation = <?php echo wp_json_encode( __( 'Are you sure you want to delete this song list?', 'dmbc-extras' ) ); ?>;
+		jQuery(document).ready(function ($) {
+			$('#dmbc_delete_song_list_form').on('submit', function (event) {
+				if (!window.confirm(dmbcDeleteConfirmation)) {
+					event.preventDefault();
+				}
+			});
+
+			var $available = $('#dmbc_available_song_folders');
+			var $selected = $('#dmbc_selected_song_folders');
+
+			var addSelectedToList = function () {
+				$available.find('option:selected').each(function () {
+					var $option = $(this);
+					if ($selected.find('option[value="' + $option.val() + '"]').length) {
+						return;
+					}
+					$selected.append($('<option></option>').val($option.val()).text($option.text()));
+				});
+			};
+
+			$available.on('dblclick', 'option', function () {
+				var $option = $(this);
+				if ($selected.find('option[value="' + $option.val() + '"]').length) {
 					return;
 				}
-				$selected.append( $( '<option></option>' ).val( $option.val() ).text( $option.text() ) );
-			} );
-		};
+				$selected.append($('<option></option>').val($option.val()).text($option.text()));
+			});
 
-		$available.on( 'dblclick', 'option', function () {
-			var $option = $( this );
-			if ( $selected.find( 'option[value="' + $option.val() + '"]' ).length ) {
-				return;
-			}
-			$selected.append( $( '<option></option>' ).val( $option.val() ).text( $option.text() ) );
-		} );
+			$selected.on('dblclick', 'option', function () {
+				$(this).remove();
+			});
 
-		$selected.on( 'dblclick', 'option', function () {
-			$( this ).remove();
-		} );
+			$('#dmbc_add_selected_song_folders').on('click', addSelectedToList);
 
-		$( '#dmbc_add_selected_song_folders' ).on( 'click', addSelectedToList );
-		$( '#dmbc_remove_selected_song_folders' ).on( 'click', function () {
-			$selected.find( 'option:selected' ).remove();
-		} );
-		$( '#dmbc_clear_selected_song_folders' ).on( 'click', function () {
-			$selected.find( 'option' ).remove();
-		} );
+			$('#dmbc_remove_selected_song_folders').on('click', function () {
+				$selected.find('option:selected').remove();
+			});
 
-		$( '#dmbc_move_up_selected_song_folders' ).on( 'click', function () {
-			var selected = $selected.find( 'option:selected' );
-			selected.each( function () {
-				var $option = $( this );
-				var prev = $option.prev();
-				if ( prev.length ) {
-					$option.insertBefore( prev );
-				}
-			} );
-		} );
+			$('#dmbc_clear_selected_song_folders').on('click', function () {
+				$selected.find('option').remove();
+			});
 
-		$( '#dmbc_move_down_selected_song_folders' ).on( 'click', function () {
-			var selected = $selected.find( 'option:selected' );
-			$( selected.get().reverse() ).each( function () {
-				var $option = $( this );
-				var next = $option.next();
-				if ( next.length ) {
-					$option.insertAfter( next );
-				}
-			} );
-		} );
-	} );
+			$('#dmbc_move_up_selected_song_folders').on('click', function () {
+				var selected = $selected.find('option:selected');
+				selected.each(function () {
+					var $option = $(this);
+					var prev = $option.prev();
+					if (prev.length) {
+						$option.insertBefore(prev);
+					}
+				});
+			});
+
+			$('#dmbc_move_down_selected_song_folders').on('click', function () {
+				var selected = $selected.find('option:selected');
+				$(selected.get().reverse()).each(function () {
+					var $option = $(this);
+					var next = $option.next();
+					if (next.length) {
+						$option.insertAfter(next);
+					}
+				});
+			});
+
+			$('form').on('submit', function () {
+				$selected.find('option').prop('selected', true);
+			});
+		});
 	</script>
 	<?php
 }

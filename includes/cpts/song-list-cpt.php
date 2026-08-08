@@ -1,5 +1,8 @@
 <?php
+namespace dmbc_extras;
+
 if ( ! defined( 'ABSPATH' ) ) {
+	print 'ABSPATH is not defined. This file (' . __FILE__ . ') should not be accessed directly.' . PHP_EOL;
 	exit;
 }
 
