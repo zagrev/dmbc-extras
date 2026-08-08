@@ -4,6 +4,7 @@ vendor/
 
 # Local test and generated artifacts
 .phpunit.result.cache
+.phpunit.cache/
 
 # Editor and local build artifacts
 .vscode/

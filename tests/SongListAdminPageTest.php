@@ -28,7 +28,7 @@ class SongListAdminPageTest extends DmbcTestCase {
 		when( 'absint' )->returnArg();
 		when( 'wp_normalize_path' )->returnArg();
 		expect( 'get_post' )->zeroOrMoreTimes()->andReturn( $post );
-		expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturn( [ 'Song A' ] );
+		expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturn( [ 'Song A', 'Song B' ] );
 		expect( 'get_posts' )->zeroOrMoreTimes()->andReturn( [ $post ] );
 		expect( 'get_the_title' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_object ) {
 			return $post_object->post_title ?? 'Test List';
@@ -48,21 +48,11 @@ class SongListAdminPageTest extends DmbcTestCase {
 		} );
 		expect( 'selected' )->zeroOrMoreTimes()->andReturn( true );
 		expect( 'admin_url' )->zeroOrMoreTimes()->andReturn( 'https://example.test/wp-admin/admin.php' );
-		expect( 'esc_url' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
-			return $text;
-		} );
-		expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
-			return $text;
-		} );
-		expect( 'esc_attr' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
-			return $text;
-		} );
-		expect( 'esc_html' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
-			return $text;
-		} );
-		expect( 'esc_textarea' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
-			return $text;
-		} );
+		expect( 'esc_url' )->zeroOrMoreTimes()->andReturnFirstArg();
+		expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnFirstArg();
+		expect( 'esc_attr' )->zeroOrMoreTimes()->andReturnFirstArg();
+		expect( 'esc_html' )->zeroOrMoreTimes()->andReturnFirstArg();
+		expect( 'esc_textarea' )->zeroOrMoreTimes()->andReturnFirstArg();
 		expect( 'get_option' )->zeroOrMoreTimes()->andReturn( 'dmbc-song-library' );
 
 		$_GET['dmbc_song_sort'] = 'modified';

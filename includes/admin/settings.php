@@ -12,7 +12,7 @@ if ( ! function_exists( __NAMESPACE__ . '\dmbc_extras_register_settings' ) ) {
 
 	function dmbc_extras_get_song_library_directory_option() {
 		return dmbc_extras_sanitize_song_library_directory(
-			(string) get_option( 'dmbc_extras_song_library_directory', 'dmbc-song-library' )
+			(string) \get_option( 'dmbc_extras_song_library_directory', 'dmbc-song-library' )
 		);
 	}
 
