@@ -165,5 +165,4 @@ expect( 'add_action' )->zeroOrMoreTimes()->with( 'admin_init', \Mockery::type( '
 
 when( 'add_filter' )->justReturn( true );
 when( "clean_post_cache" )->justReturn( true );
-when( 'get_option' )->justReturn( 'dmbc-song-library' );
 

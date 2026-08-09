@@ -78,9 +78,7 @@ class SongListAdminPageTest extends DmbcTestCase {
 	}
 
 	public function test_it_returns_the_configured_song_library_directory() {
-		expect( 'get_option' )->once()->with( 'dmbc_extras_song_library_directory', 'dmbc-song-library' )->andReturn( 'custom-library' );
-
-		$this->assertSame( 'custom-library', \dmbc_extras\dmbc_extras_get_song_library_directory_option() );
+		$this->assertSame( $this->song_list_directory, \dmbc_extras\dmbc_extras_get_song_library_directory_option() );
 	}
 
 	public function test_it_lists_subdirectories_for_the_wp_content_browser() {

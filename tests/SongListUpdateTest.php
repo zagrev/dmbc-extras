@@ -61,7 +61,6 @@ class SongListUpdateTest extends DmbcTestCase {
 				$actual_metadata[ $key ] = $value;
 				return $key;
 			} );
-		expect( 'get_option' )->andReturn( $default_song_list_directory );
 
 		$_POST = array(
 			'dmbc_song_list_nonce' => 'nonce',

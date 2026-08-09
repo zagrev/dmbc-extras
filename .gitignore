@@ -1,10 +1,10 @@
-../dmbc-song-library/*
-!../dmbc-song-library/.gitignore
 vendor/
 
 # Local test and generated artifacts
 .phpunit.result.cache
 .phpunit.cache/
+.phpunit.cache/test-results
+test-song-lists/
 
 # Editor and local build artifacts
 .vscode/
