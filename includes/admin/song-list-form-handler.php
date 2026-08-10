@@ -156,10 +156,7 @@ function dmbc_extras_handle_song_list_form() {
 	if ( isset( $_POST['dmbc_song_list_songs'] ) && is_array( $_POST['dmbc_song_list_songs'] ) ) {
 		$song_library_dir = dmbc_extras_get_song_library_directory_path();
 		$selected_songs = array_map(
-			function ( $song ) use ( $song_library_dir ) {
-				$normalized_path = \wp_normalize_path( \sanitize_text_field( \wp_unslash( $song ) ) );
-				return \str_replace( $song_library_dir, '', $normalized_path );
-			},
+			fn( $full_path ) => dmbc_extras_convert_full_path_to_relative( $song_library_dir, $full_path ),
 			$selected_songs
 		);
 
