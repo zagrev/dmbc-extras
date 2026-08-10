@@ -95,12 +95,12 @@ expect( 'admin_url' )->zeroOrMoreTimes()->andReturnUsing( function ( $path ) {
 
 when( "clean_post_cache" )->justReturn( true );
 
-expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_id, $key ) {
+expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_id, $key, $single = false ) {
 	global $__dmbc_test_post_meta;
 	if ( isset( $__dmbc_test_post_meta[ $post_id ] ) && isset( $__dmbc_test_post_meta[ $post_id ][ $key ] ) ) {
-		return [ $__dmbc_test_post_meta[ $post_id ][ $key ] ];
+		return $single ? $__dmbc_test_post_meta[ $post_id ][ $key ] : [ $__dmbc_test_post_meta[ $post_id ][ $key ] ];
 	}
-	return [ [] ];
+	return $single ? null : [ [] ];
 } );
 
 expect( 'get_the_excerpt' )->zeroOrMoreTimes()->andReturnUsing( function ( $post ) {
@@ -121,6 +121,14 @@ expect( 'get_the_title' )->zeroOrMoreTimes()->andReturnUsing( function ( $post )
 		return $post->post_title;
 	}
 	return $post['post_title'];
+} );
+
+expect( 'get_the_date' )->zeroOrMoreTimes()->andReturnUsing( function ( $format, $post ) {
+	return $post->post_date ?? '';
+} );
+
+expect( 'get_the_modified_date' )->zeroOrMoreTimes()->andReturnUsing( function ( $format, $post ) {
+	return $post->post_modified ?? '';
 } );
 
 when( 'plugin_dir_path' )->justReturn( dirname( __DIR__ ) . '/' );

@@ -28,12 +28,16 @@ class SongListAdminPageTest extends DmbcTestCase {
 		when( 'absint' )->returnArg();
 		when( 'wp_normalize_path' )->returnArg();
 		expect( 'get_post' )->zeroOrMoreTimes()->andReturn( $post );
-		expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturn( [ 'Song A', 'Song B' ] );
+		expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_id, $key, $single = false ) {
+			return 'dmbc_song_list_rehearsal_date' === $key ? '2026-09-15' : [ 'Song A', 'Song B' ];
+		} );
 		expect( 'get_posts' )->zeroOrMoreTimes()->andReturn( [ $post ] );
 		expect( 'get_the_title' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_object ) {
 			return $post_object->post_title ?? 'Test List';
 		} );
 		expect( 'get_the_excerpt' )->zeroOrMoreTimes()->andReturn( 'Content' );
+		expect( 'get_the_date' )->zeroOrMoreTimes()->andReturn( '2026-08-10 10:00:00' );
+		expect( 'get_the_modified_date' )->zeroOrMoreTimes()->andReturn( '2026-08-10 11:00:00' );
 		expect( 'esc_html_e' )->zeroOrMoreTimes()->andReturnUsing( function ( $text ) {
 			echo $text;
 			return true;
@@ -75,6 +79,13 @@ class SongListAdminPageTest extends DmbcTestCase {
 		$this->assertStringContainsString( 'Sort by', $output );
 		$this->assertStringContainsString( 'Song A', $output );
 		$this->assertStringContainsString( 'Update Song List', $output );
+		$this->assertStringContainsString( 'dmbc_song_list_created_date', $output );
+		$this->assertStringContainsString( 'dmbc_song_list_updated_date', $output );
+		$this->assertStringContainsString( 'dmbc_song_list_rehearsal_date', $output );
+		$this->assertStringContainsString( 'type="date"', $output );
+		$this->assertStringContainsString( 'Rehearsal date:', $output );
+		$this->assertStringContainsString( 'Created:', $output );
+		$this->assertStringContainsString( 'Updated:', $output );
 	}
 
 	public function test_it_returns_the_configured_song_library_directory() {
@@ -96,5 +107,56 @@ class SongListAdminPageTest extends DmbcTestCase {
 
 		rmdir( $nested_directory );
 		rmdir( $directory );
+	}
+
+	public function test_it_registers_song_list_notification_settings() {
+		$registered_settings = [];
+		$registered_fields = [];
+
+		expect( '__' )->zeroOrMoreTimes()->andReturnFirstArg();
+		expect( 'register_setting' )->zeroOrMoreTimes()->andReturnUsing(
+			function ( $group, $name ) use ( &$registered_settings ) {
+				$registered_settings[] = [ $group, $name ];
+				return true;
+			}
+		);
+		expect( 'add_settings_section' )->zeroOrMoreTimes()->andReturn( true );
+		expect( 'add_settings_field' )->zeroOrMoreTimes()->andReturnUsing(
+			function ( $id ) use ( &$registered_fields ) {
+				$registered_fields[] = $id;
+				return true;
+			}
+		);
+
+		\dmbc_extras\dmbc_extras_register_settings();
+
+		$this->assertContains(
+			[ 'dmbc_extras_settings_group', 'dmbc_extras_song_list_recipient_roles' ],
+			$registered_settings
+		);
+		$this->assertContains(
+			[ 'dmbc_extras_settings_group', 'dmbc_extras_song_list_default_recipient' ],
+			$registered_settings
+		);
+		$this->assertContains( 'dmbc_extras_song_list_recipient_roles', $registered_fields );
+		$this->assertContains( 'dmbc_extras_song_list_default_recipient', $registered_fields );
+	}
+
+	public function test_it_filters_recipient_roles_to_existing_roles() {
+		expect( 'wp_roles' )->once()->andReturn(
+			(object) array(
+				'roles' => array(
+					'editor' => array( 'name' => 'Editor' ),
+				),
+			)
+		);
+		expect( 'sanitize_key' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+			return strtolower( (string) $value );
+		} );
+
+		$this->assertSame(
+			[ 'editor' ],
+			\dmbc_extras\dmbc_extras_sanitize_song_list_recipient_roles( [ 'Editor', 'subscriber' ] )
+		);
 	}
 }

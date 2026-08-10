@@ -50,11 +50,17 @@ function dmbc_extras_render_song_lists_admin_page() {
 	$edit_title = '';
 	$edit_content = '';
 	$edit_songs = [];
+	$rehearsal_date = '';
+	$created_date = '';
+	$updated_date = '';
 
 	if ( $edit_post ) {
 		$edit_title = \get_the_title( $edit_post );
 		$edit_content = \get_the_excerpt( $edit_post );
 		$edit_songs = \get_post_meta( $edit_post->ID, 'dmbc_song_list_songs' )[0];
+		$rehearsal_date = \get_post_meta( $edit_post->ID, 'dmbc_song_list_rehearsal_date', true );
+		$created_date = \get_the_date( 'Y-m-d H:i:s', $edit_post );
+		$updated_date = \get_the_modified_date( 'Y-m-d H:i:s', $edit_post );
 	}
 
 	if ( 'title' === $sort_value ) {
@@ -161,6 +167,33 @@ function dmbc_extras_render_song_lists_admin_page() {
 								class="large-text"><?php echo \esc_textarea( $edit_content ); ?></textarea>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row">
+							<label for="dmbc_song_list_rehearsal_date"><?php \esc_html_e( 'Rehearsal date', 'dmbc-extras' ); ?></label>
+						</th>
+						<td>
+							<input type="date" id="dmbc_song_list_rehearsal_date" name="dmbc_song_list_rehearsal_date"
+								value="<?php echo \esc_attr( $rehearsal_date ); ?>" class="regular-text">
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="dmbc_song_list_created_date"><?php \esc_html_e( 'Created date', 'dmbc-extras' ); ?></label>
+						</th>
+						<td>
+							<input type="text" id="dmbc_song_list_created_date" name="created_date"
+								value="<?php echo \esc_attr( $created_date ); ?>" class="regular-text" readonly>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="dmbc_song_list_updated_date"><?php \esc_html_e( 'Updated date', 'dmbc-extras' ); ?></label>
+						</th>
+						<td>
+							<input type="text" id="dmbc_song_list_updated_date" name="updated_date"
+								value="<?php echo \esc_attr( $updated_date ); ?>" class="regular-text" readonly>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 			<?php \submit_button( $edit_id > 0 ? __( 'Update Song List', 'dmbc-extras' ) : __( 'Create Song List', 'dmbc-extras' ) ); ?>
@@ -203,6 +236,12 @@ function dmbc_extras_render_song_lists_admin_page() {
 						<strong><a
 								href="<?php echo \esc_url( \admin_url( 'admin.php?page=dmbc-rehearsal-song-lists&dmbc_song_list_id=' . (int) $song_list->ID ) ); ?>"><?php echo \esc_html( \get_the_title( $song_list ) ); ?></a></strong>
 						<div><?php echo \wp_kses_post( \get_the_excerpt( $song_list ) ); ?></div>
+						<?php $list_rehearsal_date = \get_post_meta( $song_list->ID, 'dmbc_song_list_rehearsal_date', true ); ?>
+						<?php if ( ! empty( $list_rehearsal_date ) ) : ?>
+							<div><strong><?php \esc_html_e( 'Rehearsal date:', 'dmbc-extras' ); ?></strong> <?php echo \esc_html( $list_rehearsal_date ); ?></div>
+						<?php endif; ?>
+						<div><strong><?php \esc_html_e( 'Created:', 'dmbc-extras' ); ?></strong> <?php echo \esc_html( \get_the_date( 'Y-m-d H:i:s', $song_list ) ); ?></div>
+						<div><strong><?php \esc_html_e( 'Updated:', 'dmbc-extras' ); ?></strong> <?php echo \esc_html( \get_the_modified_date( 'Y-m-d H:i:s', $song_list ) ); ?></div>
 					</li>
 				<?php endforeach; ?>
 			</ul>

@@ -52,7 +52,7 @@ class SongListUpdateTest extends DmbcTestCase {
 				$captured_callback = $callback;
 				return true;
 			} );
-		expect( 'update_post_meta' )->once()->andReturnUsing(
+		expect( 'update_post_meta' )->zeroOrMoreTimes()->andReturnUsing(
 			function ( $id, $key, $value ) use ( &$actual_metadata ) {
 				if ( isset( $actual_metadata[ $key ] ) ) {
 					$actual_metadata[ $key ] = $value;
@@ -67,6 +67,7 @@ class SongListUpdateTest extends DmbcTestCase {
 			'dmbc_song_list_id' => 5,
 			'dmbc_song_list_title' => 'Existing Updated',
 			'dmbc_song_list_content' => 'New content',
+			'dmbc_song_list_rehearsal_date' => '2026-10-20',
 			'dmbc_song_list_songs' => $expected_song_list,
 		);
 
@@ -76,5 +77,6 @@ class SongListUpdateTest extends DmbcTestCase {
 		$this->assertSame( 5, $post_data['ID'] );
 		$this->assertArrayHasKey( 'dmbc_song_list_songs', $actual_metadata );
 		$this->assertSame( $expected_song_list, $actual_metadata['dmbc_song_list_songs'] );
+		$this->assertSame( '2026-10-20', $actual_metadata['dmbc_song_list_rehearsal_date'] );
 	}
 }

@@ -20,17 +20,23 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		$captured_callback = null;
 
 		expect( 'wp_unslash' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'sanitize_text_field' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'absint' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'wp_normalize_path' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'clean_post_cache' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'get_option' )->zeroOrMoreTimes()->andReturn( 'dmbc-song-library' );
 		expect( 'wp_verify_nonce' )->once()->andReturn( true );
 		expect( 'current_user_can' )->andReturnUsing(
@@ -50,6 +56,7 @@ class SongListFormHandlerTest extends DmbcTestCase {
 			'dmbc_song_list_nonce' => 'nonce',
 			'dmbc_song_list_title' => 'Spring Rehearsal',
 			'dmbc_song_list_content' => 'Notes',
+			'dmbc_song_list_rehearsal_date' => '2026-09-15',
 			'dmbc_song_list_songs' => [
 				'/Song A',
 				'/Song A/Sub Song',
@@ -96,7 +103,8 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		ob_start();
 		if ( is_string( $captured_callback ) ) {
 			call_user_func( $captured_callback );
-		} else {
+		}
+		else {
 			$captured_callback();
 		}
 		$output = ob_get_clean();
@@ -104,6 +112,7 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		$this->assertStringContainsString( 'created', $output );
 
 		$this->assertArraysAreEqual( $_POST['dmbc_song_list_songs'], $actual_metadata['dmbc_song_list_songs'], 'The saved post meta does not match the selected songs.' );
+		$this->assertSame( '2026-09-15', $actual_metadata['dmbc_song_list_rehearsal_date'] );
 	}
 
 	/**
@@ -121,17 +130,23 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		$captured_callback = null;
 
 		expect( 'wp_unslash' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'sanitize_text_field' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'absint' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'wp_normalize_path' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'clean_post_cache' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'get_option' )->zeroOrMoreTimes()->andReturn( 'dmbc-song-library' );
 		expect( 'wp_verify_nonce' )->andReturn( true );
 		expect( 'current_user_can' )->once()->with( 'edit_song_list' )->andReturn( true );
@@ -149,7 +164,7 @@ class SongListFormHandlerTest extends DmbcTestCase {
 				$captured_callback = $callback;
 				return true;
 			} );
-		expect( 'update_post_meta' )->once()->andReturnUsing(
+		expect( 'update_post_meta' )->zeroOrMoreTimes()->andReturnUsing(
 			function ( $id, $key, $value ) use ( &$actual_metadata ) {
 				$actual_metadata[ $key ] = $value;
 				return true;
@@ -174,6 +189,7 @@ class SongListFormHandlerTest extends DmbcTestCase {
 			'dmbc_song_list_id' => 5,
 			'dmbc_song_list_title' => 'Existing Updated',
 			'dmbc_song_list_content' => 'New content',
+			'dmbc_song_list_rehearsal_date' => '2026-10-20',
 			'dmbc_song_list_songs' => $expected_song_list,
 		);
 
@@ -183,17 +199,74 @@ class SongListFormHandlerTest extends DmbcTestCase {
 		$this->assertSame( 5, $post_data['ID'] );
 		$this->assertArrayHasKey( 'dmbc_song_list_songs', $actual_metadata );
 		$this->assertSame( $expected_song_list, $actual_metadata['dmbc_song_list_songs'] );
+		$this->assertSame( '2026-10-20', $actual_metadata['dmbc_song_list_rehearsal_date'] );
+	}
+
+	/**
+	 * Test that a song list is emailed to users in the requested role.
+	 */
+	public function test_it_sends_a_song_list_to_users_in_a_role() {
+		$recipients = [];
+		$subject = '';
+		$message = '';
+
+		expect( 'get_post' )
+			->once()
+			->with( 12 )
+			->andReturn(
+				(object) array(
+					'ID' => 12,
+					'post_type' => 'dmbc_song_list',
+					'post_title' => 'Spring Rehearsal',
+					'post_content' => 'Review the new entrances.',
+				)
+			);
+		expect( 'get_users' )
+			->once()
+			->with( [ 'role__in' => [ 'chorus_member' ] ] )
+			->andReturn(
+				[
+					(object) array( 'user_email' => 'member@example.com' ),
+					(object) array( 'user_email' => '' ),
+				]
+			);
+		global $__dmbc_test_post_meta;
+		$__dmbc_test_post_meta[12]['dmbc_song_list_songs'] = [ '/Song A', '/Song B' ];
+		expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_id, $key, $single = false ) {
+			return 'dmbc_song_list_rehearsal_date' === $key ? '2026-09-15' : [ '/Song A', '/Song B' ];
+		} );
+		expect( 'wp_mail' )
+			->once()
+			->andReturnUsing(
+				function ( $to, $mail_subject, $mail_message ) use ( &$recipients, &$subject, &$message ) {
+					$recipients = $to;
+					$subject = $mail_subject;
+					$message = $mail_message;
+					return true;
+				}
+			);
+
+		$this->assertTrue( \dmbc_extras\dmbc_extras_send_song_list_to_role( 12, 'chorus_member' ) );
+		$this->assertSame( [ 'member@example.com' ], $recipients );
+		$this->assertSame( 'Rehearsal song list: Spring Rehearsal', $subject );
+		$this->assertStringContainsString( 'Rehearsal date: 2026-09-15', $message );
+		$this->assertStringContainsString( 'Review the new entrances.', $message );
+		$this->assertStringContainsString( '/Song A', $message );
+		$this->assertStringContainsString( '/Song B', $message );
 	}
 
 	public function test_it_deletes_a_song_list_when_requested() {
 		$captured_callback = null;
 
 		expect( 'wp_unslash' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'sanitize_text_field' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'absint' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
-			return $value; } );
+			return $value;
+		} );
 		expect( 'wp_verify_nonce' )->once()->with( 'delete-nonce', 'dmbc_delete_song_list' )->andReturn( true );
 		expect( 'current_user_can' )->andReturnUsing( function ( $capability ) {
 			return in_array( $capability, [ 'edit_song_list', 'manage_options' ], true );

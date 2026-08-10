@@ -30,6 +30,39 @@ if ( ! function_exists( __NAMESPACE__ . '\dmbc_extras_register_settings' ) ) {
 		return wp_normalize_path( WP_CONTENT_DIR . '/' . $directory );
 	}
 
+	function dmbc_extras_sanitize_song_list_recipient_roles( $value ) {
+		$value = is_array( $value ) ? $value : array();
+		$roles = function_exists( 'wp_roles' ) ? array_keys( \wp_roles()->roles ) : array();
+		$value = array_map(
+			function ( $role ) {
+				return function_exists( 'sanitize_key' ) ? \sanitize_key( $role ) : (string) $role;
+			},
+			$value
+		);
+
+		return array_values( array_intersect( $value, $roles ) );
+	}
+
+	function dmbc_extras_get_song_list_recipient_roles() {
+		$roles = \get_option( 'dmbc_extras_song_list_recipient_roles', array() );
+
+		return is_array( $roles ) ? dmbc_extras_sanitize_song_list_recipient_roles( $roles ) : array();
+	}
+
+	function dmbc_extras_sanitize_song_list_default_recipient( $value ) {
+		return function_exists( 'sanitize_email' ) ? \sanitize_email( $value ) : '';
+	}
+
+	function dmbc_extras_get_song_list_default_recipient() {
+		$recipient = \get_option( 'dmbc_extras_song_list_default_recipient', '' );
+
+		if ( empty( $recipient ) ) {
+			$recipient = \get_option( 'admin_email', '' );
+		}
+
+		return dmbc_extras_sanitize_song_list_default_recipient( $recipient );
+	}
+
 	function dmbc_extras_register_settings() {
 		register_setting(
 			'dmbc_extras_settings_group',
@@ -38,6 +71,24 @@ if ( ! function_exists( __NAMESPACE__ . '\dmbc_extras_register_settings' ) ) {
 				'type' => 'string',
 				'sanitize_callback' => __NAMESPACE__ . '\dmbc_extras_sanitize_song_library_directory',
 				'default' => 'dmbc-song-library',
+			)
+		);
+		register_setting(
+			'dmbc_extras_settings_group',
+			'dmbc_extras_song_list_recipient_roles',
+			array(
+				'type' => 'array',
+				'sanitize_callback' => __NAMESPACE__ . '\\dmbc_extras_sanitize_song_list_recipient_roles',
+				'default' => array(),
+			)
+		);
+		register_setting(
+			'dmbc_extras_settings_group',
+			'dmbc_extras_song_list_default_recipient',
+			array(
+				'type' => 'string',
+				'sanitize_callback' => __NAMESPACE__ . '\\dmbc_extras_sanitize_song_list_default_recipient',
+				'default' => '',
 			)
 		);
 
@@ -54,6 +105,29 @@ if ( ! function_exists( __NAMESPACE__ . '\dmbc_extras_register_settings' ) ) {
 			__NAMESPACE__ . '\dmbc_extras_render_song_library_directory_field',
 			'dmbc_extras_settings',
 			'dmbc_extras_general_section'
+		);
+
+		add_settings_section(
+			'dmbc_extras_notifications_section',
+			__( 'Rehearsal song list notifications', 'dmbc-extras' ),
+			'__return_empty_string',
+			'dmbc_extras_settings'
+		);
+
+		add_settings_field(
+			'dmbc_extras_song_list_recipient_roles',
+			__( 'Recipient roles', 'dmbc-extras' ),
+			__NAMESPACE__ . '\\dmbc_extras_render_song_list_recipient_roles_field',
+			'dmbc_extras_settings',
+			'dmbc_extras_notifications_section'
+		);
+
+		add_settings_field(
+			'dmbc_extras_song_list_default_recipient',
+			__( 'Default recipient', 'dmbc-extras' ),
+			__NAMESPACE__ . '\\dmbc_extras_render_song_list_default_recipient_field',
+			'dmbc_extras_settings',
+			'dmbc_extras_notifications_section'
 		);
 	}
 
@@ -121,6 +195,37 @@ if ( ! function_exists( __NAMESPACE__ . '\dmbc_extras_register_settings' ) ) {
 				});
 			});
 		</script>
+		<?php
+	}
+
+	function dmbc_extras_render_song_list_recipient_roles_field() {
+		$selected_roles = dmbc_extras_get_song_list_recipient_roles();
+		$roles = \wp_roles()->roles;
+		foreach ( $roles as $role_slug => $role ) {
+			$role_name = translate_user_role( $role['name'] );
+			?>
+			<label>
+				<input type="checkbox" name="dmbc_extras_song_list_recipient_roles[]" value="<?php echo esc_attr( $role_slug ); ?>"
+					<?php checked( in_array( $role_slug, $selected_roles, true ) ); ?> />
+				<?php echo esc_html( $role_name ); ?>
+			</label><br />
+			<?php
+		}
+		?>
+		<p class="description">
+			<?php esc_html_e( 'Users with these roles will receive an email when a rehearsal song list is created or updated.', 'dmbc-extras' ); ?>
+		</p>
+		<?php
+	}
+
+	function dmbc_extras_render_song_list_default_recipient_field() {
+		$value = esc_attr( dmbc_extras_get_song_list_default_recipient() );
+		?>
+		<input type="email" name="dmbc_extras_song_list_default_recipient" id="dmbc_extras_song_list_default_recipient"
+			value="<?php echo $value; ?>" class="regular-text" />
+		<p class="description">
+			<?php esc_html_e( 'This address receives the email in addition to selected role members. It defaults to the site administrator email.', 'dmbc-extras' ); ?>
+		</p>
 		<?php
 	}
 

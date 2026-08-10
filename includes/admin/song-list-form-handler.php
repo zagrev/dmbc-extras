@@ -25,7 +25,8 @@ function dmbc_extras_handle_delete_song_list_form() {
 					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Rehearsal song list deleted successfully.', 'dmbc-extras' ) . '</p></div>';
 				}
 			);
-		} else {
+		}
+		else {
 			\add_action(
 				'admin_notices',
 				function () {
@@ -33,7 +34,8 @@ function dmbc_extras_handle_delete_song_list_form() {
 				}
 			);
 		}
-	} else {
+	}
+	else {
 		\add_action(
 			'admin_notices',
 			function () {
@@ -42,6 +44,82 @@ function dmbc_extras_handle_delete_song_list_form() {
 		);
 	}
 }
+
+/**
+ * Sends a rehearsal song list to users who belong to configured roles.
+ *
+ * @param int        $song_list_id The rehearsal song list post ID.
+ * @param array|null $roles        Optional role slugs to notify.
+ * @return bool Whether WordPress accepted the email for delivery.
+ */
+function dmbc_extras_send_song_list_to_roles( $song_list_id, $roles = null ) {
+	$roles = null === $roles ? dmbc_extras_get_song_list_recipient_roles() : (array) $roles;
+	$recipients = array();
+	if ( ! empty( $roles ) ) {
+		$users = \get_users(
+			array(
+				'role__in' => $roles,
+			)
+		);
+		$recipients = array_map(
+			function ( $user ) {
+				return isset( $user->user_email ) ? $user->user_email : '';
+			},
+			(array) $users
+		);
+	}
+
+	$default_recipient = dmbc_extras_get_song_list_default_recipient();
+	if ( ! empty( $default_recipient ) ) {
+		$recipients[] = $default_recipient;
+	}
+	$recipients = array_values( array_unique( array_filter( $recipients ) ) );
+	$recipients = array_values(
+		array_filter(
+			$recipients,
+			function ( $recipient ) {
+				return function_exists( 'is_email' ) ? \is_email( $recipient ) : filter_var( $recipient, FILTER_VALIDATE_EMAIL );
+			}
+		)
+	);
+
+	if ( empty( $recipients ) ) {
+		return false;
+	}
+
+	$song_list = \get_post( $song_list_id );
+	if ( ! $song_list || 'dmbc_song_list' !== $song_list->post_type ) {
+		return false;
+	}
+
+	$songs = \get_post_meta( $song_list_id, 'dmbc_song_list_songs', true );
+	$songs = is_array( $songs ) ? $songs : array();
+	$rehearsal_date = \get_post_meta( $song_list_id, 'dmbc_song_list_rehearsal_date', true );
+	$message = "Rehearsal song list: {$song_list->post_title}\n\n";
+	if ( ! empty( $rehearsal_date ) ) {
+		$message .= "Rehearsal date: {$rehearsal_date}\n\n";
+	}
+	$message .= $song_list->post_content . "\n\nSongs:\n";
+	$message .= empty( $songs ) ? "No songs selected.\n" : implode( "\n", $songs ) . "\n";
+
+	return \wp_mail(
+		$recipients,
+		'Rehearsal song list: ' . $song_list->post_title,
+		$message
+	);
+}
+
+/**
+ * Sends a rehearsal song list to users who belong to one role.
+ *
+ * @param int    $song_list_id The rehearsal song list post ID.
+ * @param string $role         The role slug whose members should receive the list.
+ * @return bool Whether WordPress accepted the email for delivery.
+ */
+function dmbc_extras_send_song_list_to_role( $song_list_id, $role ) {
+	return dmbc_extras_send_song_list_to_roles( $song_list_id, array( $role ) );
+}
+
 /**
  * Handles the rehearsal song list form submission.
  *
@@ -66,7 +144,14 @@ function dmbc_extras_handle_song_list_form() {
 	$title = isset( $_POST['dmbc_song_list_title'] ) ? \sanitize_text_field( \wp_unslash( $_POST['dmbc_song_list_title'] ) ) : '';
 	$content = isset( $_POST['dmbc_song_list_content'] ) ? \wp_kses_post( \wp_unslash( $_POST['dmbc_song_list_content'] ) ) : '';
 	$song_list_id = isset( $_POST['dmbc_song_list_id'] ) ? \absint( \wp_unslash( $_POST['dmbc_song_list_id'] ) ) : 0;
+	$rehearsal_date = isset( $_POST['dmbc_song_list_rehearsal_date'] ) ? \sanitize_text_field( \wp_unslash( $_POST['dmbc_song_list_rehearsal_date'] ) ) : '';
 	$selected_songs = isset( $_POST['dmbc_song_list_songs'] ) ? (array) $_POST['dmbc_song_list_songs'] : array();
+	if ( ! empty( $rehearsal_date ) ) {
+		$date = \DateTime::createFromFormat( '!Y-m-d', $rehearsal_date );
+		if ( ! $date || $date->format( 'Y-m-d' ) !== $rehearsal_date ) {
+			$rehearsal_date = '';
+		}
+	}
 
 	if ( isset( $_POST['dmbc_song_list_songs'] ) && is_array( $_POST['dmbc_song_list_songs'] ) ) {
 		$song_library_dir = dmbc_extras_get_song_library_directory_path();
@@ -79,7 +164,8 @@ function dmbc_extras_handle_song_list_form() {
 		);
 
 		$selected_songs = array_unique( $selected_songs );
-	} else {
+	}
+	else {
 		\add_action(
 			'admin_notices',
 			function () {
@@ -121,8 +207,10 @@ function dmbc_extras_handle_song_list_form() {
 
 	/* Ensure selected songs are stored explicitly in post meta on updates and creates. */
 	\update_post_meta( $post_id, 'dmbc_song_list_songs', $selected_songs );
+	\update_post_meta( $post_id, 'dmbc_song_list_rehearsal_date', $rehearsal_date );
 
 	\clean_post_cache( $post_id );
+	dmbc_extras_send_song_list_to_roles( $post_id );
 
 	$action = 'created';
 	if ( $song_list_id > 0 ) {
