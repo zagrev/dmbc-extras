@@ -18,15 +18,6 @@ if ( ! class_exists( 'MockRole' ) ) {
 		public $capabilities = [];
 
 		/**
-		 * Create a mock role instance.
-		 *
-		 * @param string $role The role name.
-		 */
-		public function __construct( $role ) {
-			$this->name = $role;
-		}
-
-		/**
 		 * Add or remove a capability from the role.
 		 *
 		 * @param string $cap The capability name.
@@ -38,11 +29,21 @@ if ( ! class_exists( 'MockRole' ) ) {
 			}
 			if ( $grant ) {
 				$this->capabilities[ $cap ][] = $this->name;
-			} else {
+			}
+			else {
 				$this->capabilities[ $cap ] = array_filter( $this->capabilities[ $cap ], function ( $role ) {
 					return $role !== $this->name;
 				} );
 			}
+		}
+
+		/**
+		 * Create a mock role instance.
+		 *
+		 * @param string $role The role name.
+		 */
+		public function __construct( $role ) {
+			$this->name = $role;
 		}
 	}
 }
@@ -55,6 +56,15 @@ if ( ! class_exists( 'WP_Post' ) ) {
 		public $post_excerpt;
 
 		/**
+		 * Create a mock WP_Post instance using the provided array.
+		 *
+		 * @param mixed $args Description for $args.
+		 */
+		public static function create( $args ) {
+			return new self( $args );
+		}
+
+		/**
 		 * Create a mock WP_Post instance.
 		 *
 		 * @param array $args Post data arguments.
@@ -65,19 +75,54 @@ if ( ! class_exists( 'WP_Post' ) ) {
 			$this->post_content = $args['post_content'] ?? '';
 			$this->post_excerpt = $args['post_excerpt'] ?? '';
 		}
-
-		/**
-		 * Create a mock WP_Post instance using the provided array.
-		 *
-		 * @param mixed $args Description for $args.
-		 */
-		public static function create( $args ) {
-			return new self( $args );
-		}
 	}
 }
 
 // mock basic WordPress functions used in the plugin
+expect( 'absint' )->zeroOrMoreTimes()->andReturnFirstArg();
+
+expect( '__' )->zeroOrMoreTimes()->andReturnFirstArg();
+
+expect( 'add_action' )->zeroOrMoreTimes()->with( 'admin_init', \Mockery::type( 'callable' ) )->andReturn( true );
+expect( 'add_action' )->zeroOrMoreTimes()->with( 'admin_menu', \Mockery::type( 'callable' ) )->andReturn( true );
+expect( 'add_action' )->zeroOrMoreTimes()->with( 'init', \Mockery::type( 'callable' ) )->andReturn( true );
+
+when( 'add_filter' )->justReturn( true );
+
+expect( 'admin_url' )->zeroOrMoreTimes()->andReturnUsing( function ( $path ) {
+	return 'http://example.com/wp-admin/' . ltrim( $path, '/' );
+} );
+
+when( "clean_post_cache" )->justReturn( true );
+
+expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_id, $key ) {
+	global $__dmbc_test_post_meta;
+	if ( isset( $__dmbc_test_post_meta[ $post_id ] ) && isset( $__dmbc_test_post_meta[ $post_id ][ $key ] ) ) {
+		return [ $__dmbc_test_post_meta[ $post_id ][ $key ] ];
+	}
+	return [ [] ];
+} );
+
+expect( 'get_the_excerpt' )->zeroOrMoreTimes()->andReturnUsing( function ( $post ) {
+	if ( $post instanceof \WP_Post ) {
+		return $post->post_excerpt;
+	}
+	if ( isset( $post['post_excerpt'] ) ) {
+		return $post['post_excerpt'];
+	}
+	else if ( isset( $post['post_content'] ) ) {
+		return $post['post_content'];
+	}
+	return '';
+} );
+
+expect( 'get_the_title' )->zeroOrMoreTimes()->andReturnUsing( function ( $post ) {
+	if ( $post instanceof \WP_Post ) {
+		return $post->post_title;
+	}
+	return $post['post_title'];
+} );
+
 when( 'plugin_dir_path' )->justReturn( dirname( __DIR__ ) . '/' );
 
 when( 'plugin_dir_url' )->justReturn( 'http://example.com/wp-content/plugins/dmbc-extras/' );
@@ -99,37 +144,8 @@ expect( 'register_uninstall_hook' )->zeroOrMoreTimes()->andReturnUsing( function
 
 expect( 'sanitize_text_field' )->zeroOrMoreTimes()->andReturnFirstArg();
 
-expect( 'wp_unslash' )->zeroOrMoreTimes()->andReturnUsing( fn( $value ) => str_replace( '\\', '/', $value ) );
-
-expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnFirstArg();
-
-expect( 'absint' )->zeroOrMoreTimes()->andReturnFirstArg();
-
-expect( 'get_the_title' )->zeroOrMoreTimes()->andReturnUsing( function ( $post ) {
-	if ( $post instanceof \WP_Post ) {
-		return $post->post_title;
-	}
-	return $post['post_title'];
-} );
-
-expect( 'get_the_excerpt' )->zeroOrMoreTimes()->andReturnUsing( function ( $post ) {
-	if ( $post instanceof \WP_Post ) {
-		return $post->post_excerpt;
-	}
-	if ( isset( $post['post_excerpt'] ) ) {
-		return $post['post_excerpt'];
-	} else if ( isset( $post['post_content'] ) ) {
-		return $post['post_content'];
-	}
-	return '';
-} );
-
-expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_id, $key ) {
-	global $__dmbc_test_post_meta;
-	if ( isset( $__dmbc_test_post_meta[ $post_id ] ) && isset( $__dmbc_test_post_meta[ $post_id ][ $key ] ) ) {
-		return [ $__dmbc_test_post_meta[ $post_id ][ $key ] ];
-	}
-	return [ [] ];
+expect( 'selected' )->zeroOrMoreTimes()->andReturnUsing( function ( $selected, $current ) {
+	return $selected === $current ? 'selected' : '';
 } );
 
 expect( 'set_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_id, $key, $value ) {
@@ -138,31 +154,20 @@ expect( 'set_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_i
 	return true;
 } );
 
-expect( 'wp_normalize_path' )->zeroOrMoreTimes()->andReturnUsing( function ( $path ) {
-	return str_replace( '\\', '/', $path );
-} );
-
-expect( 'wp_nonce_field' )->zeroOrMoreTimes()->andReturn( '<input type="hidden" name="dmbc_song_list_nonce" value="1" />' );
-expect( 'wp_create_nonce' )->zeroOrMoreTimes()->andReturn( 'dmbc-nonce' );
-
 expect( 'submit_button' )->zeroOrMoreTimes()->andReturnUsing( function ( $text, $type = 'primary', $name = 'submit', $wrap = true, $other_attributes = '' ) {
 	print "submit_button: text='$text', type='$type', name='$name', wrap='$wrap', other_attributes='$other_attributes'" . PHP_EOL;
 	return "<button type='submit' name='$name' class='$type'>$text</button>";
 } );
-expect( 'selected' )->zeroOrMoreTimes()->andReturnUsing( function ( $selected, $current ) {
-	return $selected === $current ? 'selected' : '';
+
+expect( 'wp_create_nonce' )->zeroOrMoreTimes()->andReturn( 'dmbc-nonce' );
+
+expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnFirstArg();
+
+expect( 'wp_nonce_field' )->zeroOrMoreTimes()->andReturn( '<input type="hidden" name="dmbc_song_list_nonce" value="1" />' );
+
+expect( 'wp_normalize_path' )->zeroOrMoreTimes()->andReturnUsing( function ( $path ) {
+	return str_replace( '\\', '/', $path );
 } );
-expect( 'admin_url' )->zeroOrMoreTimes()->andReturnUsing( function ( $path ) {
-	return 'http://example.com/wp-admin/' . ltrim( $path, '/' );
-} );
 
-expect( '__' )->zeroOrMoreTimes()->andReturnFirstArg();
-
-// these add_action calls get us through the plugin initialization to the unit tests`
-expect( 'add_action' )->zeroOrMoreTimes()->with( 'init', \Mockery::type( 'callable' ) )->andReturn( true );
-expect( 'add_action' )->zeroOrMoreTimes()->with( 'admin_menu', \Mockery::type( 'callable' ) )->andReturn( true );
-expect( 'add_action' )->zeroOrMoreTimes()->with( 'admin_init', \Mockery::type( 'callable' ) )->andReturn( true );
-
-when( 'add_filter' )->justReturn( true );
-when( "clean_post_cache" )->justReturn( true );
+expect( 'wp_unslash' )->zeroOrMoreTimes()->andReturnUsing( fn( $value ) => str_replace( '\\', '/', $value ) );
 
