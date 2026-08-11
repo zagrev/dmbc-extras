@@ -56,7 +56,7 @@ jobs:
           branch: ${{ github.ref_name }}
 
       - name: Create release artifact
-        run: zip -r dmbc-extras-${VERSION}.zip . -x '.git/*' '.github/*' 'vendor/*/.git/*'
+        run: zip -r dmbc-extras-${VERSION}.zip . -x '.git/*' '.github/*' 'vendor/*/.git/*' 'tests/*'
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
