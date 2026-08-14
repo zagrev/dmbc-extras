@@ -88,6 +88,7 @@ expect( 'add_action' )->zeroOrMoreTimes()->with( 'admin_menu', \Mockery::type( '
 expect( 'add_action' )->zeroOrMoreTimes()->with( 'init', \Mockery::type( 'callable' ) )->andReturn( true );
 
 when( 'add_filter' )->justReturn( true );
+when( 'add_shortcode' )->justReturn( true );
 
 expect( 'admin_url' )->zeroOrMoreTimes()->andReturnUsing( function ( $path ) {
 	return 'http://example.com/wp-admin/' . ltrim( $path, '/' );
@@ -102,6 +103,15 @@ expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_i
 	}
 	return $single ? null : [ [] ];
 } );
+
+when( 'is_user_logged_in' )->justReturn( true );
+
+expect( 'current_time' )->zeroOrMoreTimes()->andReturnUsing( function ( $type = 'mysql', $gmt = 0 ) {
+	return '2026-08-12 12:00:00';
+} );
+
+expect( 'esc_html' )->zeroOrMoreTimes()->andReturnFirstArg();
+expect( 'esc_html__' )->zeroOrMoreTimes()->andReturnFirstArg();
 
 expect( 'get_the_excerpt' )->zeroOrMoreTimes()->andReturnUsing( function ( $post ) {
 	if ( $post instanceof \WP_Post ) {
@@ -168,6 +178,17 @@ expect( 'submit_button' )->zeroOrMoreTimes()->andReturnUsing( function ( $text, 
 } );
 
 expect( 'wp_create_nonce' )->zeroOrMoreTimes()->andReturn( 'dmbc-nonce' );
+
+expect( 'wp_json_encode' )->zeroOrMoreTimes()->andReturnUsing( function ( $value ) {
+	return json_encode( $value );
+} );
+
+expect( 'wp_parse_args' )->zeroOrMoreTimes()->andReturnUsing( function ( $args, $defaults = array () ) {
+	if ( is_array( $args ) ) {
+		return array_merge( $defaults, $args );
+	}
+	return $defaults;
+} );
 
 expect( 'wp_kses_post' )->zeroOrMoreTimes()->andReturnFirstArg();
 

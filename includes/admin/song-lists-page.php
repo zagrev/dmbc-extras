@@ -43,19 +43,131 @@ function dmbc_extras_get_song_folder_choices() {
 	return $choices;
 }
 
+function dmbc_extras_render_member_song_lists_page() {
+	if ( ! \is_user_logged_in() ) {
+		return '<p>Please log in to view the rehearsal song lists.</p>';
+	}
+
+	if ( isset( $_GET['song_list_id'] ) ) {
+		return dmbc_extras_render_song_list_view_page( \absint( $_GET['song_list_id'] ) );
+	}
+
+	$table = new SongListTable();
+	$table->prepare_items();
+	ob_start();
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'Rehearsal Song Lists', 'dmbc-extras' ); ?></h1>
+		<form method="post">
+			<?php $table->display(); ?>
+		</form>
+	</div>
+	<?php
+	if ( is_admin() ) {
+		echo ob_get_clean();
+	}
+	else {
+		return ob_get_clean();
+	}
+}
+
+function dmbc_extras_render_song_list_view_page( $song_list_id = 0, $date = null ) {
+	if ( ! \is_user_logged_in() ) {
+		return '<p>Please log in to view this song list.</p>';
+	}
+
+	// if no id and no date provided, find the rehearsal song list that has the lowest date and is greater than or equal to today
+	$song_list = $song_list_id ? \get_post( $song_list_id ) : null;
+	if ( ! $song_list && ! $date ) {
+		$upcoming_song_lists = \get_posts(
+			array(
+				'post_type' => 'dmbc_song_list',
+				'post_status' => 'publish',
+				'posts_per_page' => 1,
+				'orderby' => 'meta_value',
+				'order' => 'ASC',
+				'meta_key' => 'dmbc_song_list_rehearsal_date',
+				'meta_value' => \current_time( 'Y-m-d' ),
+				'meta_compare' => '>=',
+			)
+		);
+		$song_list = ! empty( $upcoming_song_lists ) ? $upcoming_song_lists[0] : null;
+	}
+
+	if ( ( ! $song_list || 'dmbc_song_list' !== $song_list->post_type ) && ! $date ) {
+		return '<p>Rehearsal Song List not found.</p>';
+	}
+
+	$song_list_title = \get_the_title( $song_list );
+	$rehearsal_date = \get_post_meta( $song_list->ID, 'dmbc_song_list_rehearsal_date', true );
+	if ( empty( $rehearsal_date ) ) {
+		$rehearsal_date = date( 'Y-m-d', strtotime( $date ) );
+	}
+	$songs = \get_post_meta( $song_list->ID, 'dmbc_song_list_songs', true );
+	if ( ! is_array( $songs ) ) {
+		$songs = array();
+	}
+
+	ob_start();
+	?>
+	<div class="dmbc-song-list-view">
+		<h1><?php echo esc_html( $song_list_title );
+		echo " for "; ?><?php echo esc_html( $rehearsal_date ); ?></h1>
+
+		<?php if ( ! empty( $songs ) ) : ?>
+			<h2><?php esc_html_e( 'Songs', 'dmbc-extras' ); ?></h2>
+			<ul>
+				<?php foreach ( $songs as $song ) : ?>
+					<?php $song_path = is_array( $song ) ? implode( '/', $song ) : (string) $song; ?>
+					<?php
+					$song_url_path = $song_path;
+					$normalized_song_path = \wp_normalize_path( $song_path );
+					$song_library_directory = dmbc_extras_get_song_library_directory_option();
+					$normalized_library_directory = \wp_normalize_path( $song_library_directory );
+					if ( ! preg_match( '#^[a-zA-Z]:/#', $normalized_library_directory ) && 0 !== strpos( $normalized_library_directory, '/' ) ) {
+						$normalized_library_directory = \wp_normalize_path( WP_CONTENT_DIR . '/' . $normalized_library_directory );
+					}
+					$normalized_library_path = rtrim( $normalized_library_directory, '/' ) . '/';
+					$song_url_directory = $song_library_directory;
+					$normalized_content_path = rtrim( \wp_normalize_path( WP_CONTENT_DIR ), '/' ) . '/';
+					if ( 0 === strpos( $normalized_library_directory, $normalized_content_path ) ) {
+						$song_url_directory = substr( $normalized_library_directory, strlen( $normalized_content_path ) );
+					}
+					if ( 0 === strpos( $normalized_song_path, $normalized_library_path ) ) {
+						$song_url_path = trim( $song_url_directory . '/' . substr( $normalized_song_path, strlen( $normalized_library_path ) ), '/' );
+					}
+					else {
+						$song_url_path = trim( $song_url_directory . '/' . $song_path, '/' );
+					}
+					$song_url = \content_url( $song_url_path );
+					?>
+					<li><a href="<?php echo \esc_url( $song_url ); ?>"><?php echo esc_html( basename( $song_path ) ); ?></a></li>
+				<?php endforeach; ?>
+			</ul>
+		<?php else : ?>
+			<p><?php esc_html_e( 'No songs selected for this list.', 'dmbc-extras' ); ?></p>
+		<?php endif; ?>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+
 /**
  * Renders the rehearsal song lists admin page.
  *
  * @return void
  */
 function dmbc_extras_render_song_lists_admin_page() {
-	$sort_value = isset( $_GET['dmbc_song_sort'] ) ? \sanitize_text_field( \wp_unslash( $_GET['dmbc_song_sort'] ) ) : 'modified';
 	$edit_id = isset( $_GET['dmbc_song_list_id'] ) ? \absint( \wp_unslash( $_GET['dmbc_song_list_id'] ) ) : 0;
 	$edit_post = $edit_id > 0 ? \get_post( $edit_id ) : null;
 	$edit_title = '';
 	$edit_content = '';
 	$edit_songs = [];
-	$rehearsal_date = '';
+	$rehearsal_date = ''; // default to the next monday
+	$next_monday = strtotime( 'next monday' );
+	if ( $next_monday ) {
+		$rehearsal_date = date( 'Y-m-d', $next_monday );
+	}
 
 	if ( $edit_post ) {
 		$edit_title = \get_the_title( $edit_post );
@@ -64,24 +176,6 @@ function dmbc_extras_render_song_lists_admin_page() {
 		$rehearsal_date = \get_post_meta( $edit_post->ID, 'dmbc_song_list_rehearsal_date', true );
 	}
 
-	if ( 'title' === $sort_value ) {
-		$orderby = 'title';
-		$order = 'ASC';
-	}
-	else {
-		$orderby = 'modified';
-		$order = 'DESC';
-	}
-
-	$song_lists = \get_posts(
-		[
-			'post_type' => 'dmbc_song_list',
-			'post_status' => 'publish',
-			'numberposts' => 20,
-			'orderby' => $orderby,
-			'order' => $order,
-		]
-	);
 	$song_folders = dmbc_extras_get_song_folder_choices();
 	?>
 	<div class="wrap">
@@ -100,6 +194,17 @@ function dmbc_extras_render_song_lists_admin_page() {
 						<td>
 							<input type="text" id="dmbc_song_list_title" name="dmbc_song_list_title" class="regular-text"
 								value="<?php echo esc_attr( $edit_title ); ?>" required>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="dmbc_song_list_rehearsal_date">
+								<?php \esc_html_e( 'Rehearsal date', 'dmbc-extras' ); ?>
+							</label>
+						</th>
+						<td>
+							<input type="date" id="dmbc_song_list_rehearsal_date" name="dmbc_song_list_rehearsal_date"
+								value="<?php echo \esc_attr( $rehearsal_date ); ?>" class="regular-text">
 						</td>
 					</tr>
 					<tr>
@@ -169,16 +274,6 @@ function dmbc_extras_render_song_lists_admin_page() {
 								class="large-text"><?php echo \esc_textarea( $edit_content ); ?></textarea>
 						</td>
 					</tr>
-					<tr>
-						<th scope="row">
-							<label
-								for="dmbc_song_list_rehearsal_date"><?php \esc_html_e( 'Rehearsal date', 'dmbc-extras' ); ?></label>
-						</th>
-						<td>
-							<input type="date" id="dmbc_song_list_rehearsal_date" name="dmbc_song_list_rehearsal_date"
-								value="<?php echo \esc_attr( $rehearsal_date ); ?>" class="regular-text">
-						</td>
-					</tr>
 				</tbody>
 			</table>
 			<?php \submit_button( $edit_id > 0 ? __( 'Update Song List', 'dmbc-extras' ) : __( 'Create Song List', 'dmbc-extras' ) ); ?>
@@ -198,39 +293,6 @@ function dmbc_extras_render_song_lists_admin_page() {
 			</form>
 		</div>
 
-		<h2><?php esc_html_e( 'Existing Song Lists', 'dmbc-extras' ); ?></h2>
-		<form method="get" action="">
-			<input type="hidden" name="page" value="dmbc-rehearsal-song-lists">
-			<label for="dmbc_song_sort"><?php esc_html_e( 'Sort by', 'dmbc-extras' ); ?></label>
-			<select id="dmbc_song_sort" name="dmbc_song_sort">
-				<option value="title" <?php \selected( $sort_value, 'title' ); ?>>
-					<?php \esc_html_e( 'Name', 'dmbc-extras' ); ?>
-				</option>
-				<option value="modified" <?php \selected( $sort_value, 'modified' ); ?>>
-					<?php \esc_html_e( 'Update Date', 'dmbc-extras' ); ?>
-				</option>
-			</select>
-			<?php \submit_button( __( 'Apply', 'dmbc-extras' ), 'secondary', '', false ); ?>
-		</form>
-		<?php if ( empty( $song_lists ) ) : ?>
-			<p><?php \esc_html_e( 'No rehearsal song lists yet.', 'dmbc-extras' ); ?></p>
-		<?php else : ?>
-			<ul>
-				<?php foreach ( $song_lists as $song_list ) : ?>
-					<li>
-						<h4><a
-								href="<?php echo \esc_url( \admin_url( 'admin.php?page=dmbc-rehearsal-song-lists&dmbc_song_list_id=' . (int) $song_list->ID ) ); ?>"><?php echo \esc_html( \get_the_title( $song_list ) ); ?></a>
-						</h4>
-						<?php $list_rehearsal_date = \get_post_meta( $song_list->ID, 'dmbc_song_list_rehearsal_date', true );
-						if ( ! empty( $list_rehearsal_date ) ) : ?>
-							<div><strong><?php \esc_html_e( 'Rehearsal date:', 'dmbc-extras' ); ?></strong>
-								<?php echo \esc_html( $list_rehearsal_date ); ?></div>
-						<?php endif; ?>
-						<div><?php echo \wp_kses_post( \get_the_excerpt( $song_list ) ); ?></div>
-					</li>
-				<?php endforeach; ?>
-			</ul>
-		<?php endif; ?>
 	</div>
 	<script>
 		var dmbcDeleteConfirmation = <?php echo wp_json_encode( __( 'Are you sure you want to delete this song list?', 'dmbc-extras' ) ); ?>;
@@ -260,6 +322,13 @@ function dmbc_extras_render_song_lists_admin_page() {
 					return;
 				}
 				$selected.append($('<option></option>').val($option.val()).text($option.text()));
+			});
+
+			$available.on('keydown', function (event) {
+				if ('Enter' === event.key || 13 === event.which) {
+					event.preventDefault();
+					addSelectedToList();
+				}
 			});
 
 			$selected.on('dblclick', 'option', function () {

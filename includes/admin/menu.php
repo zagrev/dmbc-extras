@@ -12,9 +12,27 @@ function dmbc_extras_add_admin_menu() {
 		__( 'Rehearsal Songs', 'dmbc-extras' ),
 		'edit_song_list',
 		'dmbc-rehearsal-song-lists',
-		__NAMESPACE__ . '\dmbc_extras_render_song_lists_admin_page',
+		__NAMESPACE__ . '\dmbc_extras_render_member_song_lists_page',
 		'dashicons-list-view',
 		25
+	);
+
+	add_submenu_page(
+		'dmbc-rehearsal-song-lists',
+		__( 'All Rehearsal Songs', 'dmbc-extras' ),
+		__( 'All', 'dmbc-extras' ),
+		'edit_song_list',
+		'dmbc-rehearsal-song-lists',
+		__NAMESPACE__ . '\dmbc_extras_render_member_song_lists_page'
+	);
+
+	add_submenu_page(
+		'dmbc-rehearsal-song-lists',
+		__( 'Add Song List', 'dmbc-extras' ),
+		__( 'Add Song List', 'dmbc-extras' ),
+		'edit_song_list',
+		'dmbc-rehearsal-song-list-add',
+		__NAMESPACE__ . '\dmbc_extras_render_song_lists_admin_page'
 	);
 
 	add_submenu_page(

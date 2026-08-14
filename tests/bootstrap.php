@@ -17,7 +17,7 @@ require_once $plugin_dir . '/vendor/autoload.php';
 
 // Define minimal WordPress constants often used in plugins
 if ( ! defined( 'ABSPATH' ) ) {
-	define( 'ABSPATH', dirname( dirname( dirname( $plugin_dir ) ) ) );
+	define( 'ABSPATH', dirname( dirname( dirname( $plugin_dir ) ) ) . '/' );
 }
 if ( ! defined( 'WP_CONTENT_DIR' ) ) {
 	define( 'WP_CONTENT_DIR', dirname( dirname( $plugin_dir ) ) );
