@@ -11,37 +11,7 @@ function convert_full_path_to_relative( $pathToRemove, $fullPath ) {
 	return \str_replace( \wp_normalize_path( $pathToRemove ) . '/', '', $normalized_path );
 }
 
-function get_song_folder_choices() {
-	$song_library_dir = get_song_library_directory_path();
 
-	if ( ! is_dir( $song_library_dir ) ) {
-		return array();
-	}
-
-	$iterator = new \RecursiveIteratorIterator(
-		new \RecursiveDirectoryIterator( $song_library_dir, \RecursiveDirectoryIterator::SKIP_DOTS ),
-		\RecursiveIteratorIterator::SELF_FIRST
-	);
-
-	$choices = array();
-
-	foreach ( $iterator as $path ) {
-		$full_path = \wp_normalize_path( $path->getpathname() );
-		if ( $path->isDir() and ! \str_contains( $full_path, 'Archived Music' ) ) {
-
-			$relative_path = convert_full_path_to_relative( $song_library_dir, $full_path );
-
-			if ( ! empty( $relative_path ) ) {
-				$choices[ $full_path ] = $relative_path;
-			}
-		}
-
-	}
-
-	ksort( $choices, SORT_NATURAL | SORT_FLAG_CASE );
-
-	return $choices;
-}
 
 function dmbc_render_member_song_lists_page() {
 	if ( ! \is_user_logged_in() ) {

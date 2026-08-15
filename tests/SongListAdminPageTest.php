@@ -328,6 +328,24 @@ class SongListAdminPageTest extends DmbcTestCase {
 		$this->assertContains( 'song_list_default_recipient', $registered_fields );
 	}
 
+	public function test_it_saves_and_restores_song_library_exclusion_regexes() {
+		$submitted_regexes = "  Archived Music  \n^Practice\n(invalid\n";
+		$saved_regexes = \dmbc_extras\sanitize_song_library_exclusion_regexes( $submitted_regexes );
+
+		expect( 'get_option' )
+			->once()
+			->with( 'song_library_exclusion_regexes', array() )
+			->andReturn( $saved_regexes );
+
+		$restored_regexes = \dmbc_extras\get_song_library_exclusion_regexes();
+
+		$this->assertSame(
+			array( 'Archived Music', '^Practice' ),
+			$saved_regexes
+		);
+		$this->assertSame( $saved_regexes, $restored_regexes );
+	}
+
 	public function test_it_filters_recipient_roles_to_existing_roles() {
 		expect( 'wp_roles' )->once()->andReturn(
 			(object) array(

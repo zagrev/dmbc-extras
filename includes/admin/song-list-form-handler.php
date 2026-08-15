@@ -229,7 +229,49 @@ function dmbc_render_song_lists_admin_page() {
 	</script>
 	<?php
 }
+function get_song_folder_choices() {
+	$song_library_dir = get_song_library_directory_path();
 
+	if ( ! is_dir( $song_library_dir ) ) {
+		return array();
+	}
+
+	$iterator = new \RecursiveIteratorIterator(
+		new \RecursiveDirectoryIterator( $song_library_dir, \RecursiveDirectoryIterator::SKIP_DOTS ),
+		\RecursiveIteratorIterator::SELF_FIRST
+	);
+
+	$choices = array();
+
+	$exclusion_regexes = get_song_library_exclusion_regexes();
+	foreach ( $iterator as $path ) {
+
+		$full_path = \wp_normalize_path( $path->getpathname() );
+		if ( $path->isDir() and ! \str_contains( $full_path, 'Archived Music' ) ) {
+			$exclude = false;
+
+			foreach ( $exclusion_regexes as $regex ) {
+				if ( preg_match( '/' . $regex . '/', $full_path ) ) {
+					$exclude = true;
+					break;
+				}
+			}
+
+			if ( ! $exclude ) {
+
+				$relative_path = convert_full_path_to_relative( $song_library_dir, $full_path );
+
+				if ( ! empty( $relative_path ) ) {
+					$choices[ $full_path ] = $relative_path;
+				}
+			}
+		}
+	}
+
+	ksort( $choices, SORT_NATURAL | SORT_FLAG_CASE );
+
+	return $choices;
+}
 
 function dmbc_render_song_list_delete_page() {
 	$_GET['action'] = 'view';

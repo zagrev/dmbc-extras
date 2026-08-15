@@ -23,11 +23,29 @@ if ( ! function_exists( __NAMESPACE__ . '\register_settings' ) ) {
 			$directory = 'dmbc-song-library';
 		}
 
+		// if already an absolute path, return it as-is
 		if ( preg_match( '#^([a-zA-Z]:)?/#', $directory ) ) {
 			return wp_normalize_path( $directory );
 		}
-
 		return wp_normalize_path( WP_CONTENT_DIR . '/' . $directory );
+	}
+
+	function sanitize_song_library_exclusion_regexes( $value ) {
+		$regexes = is_array( $value ) ? $value : preg_split( '/\r\n|\r|\n/', (string) $value );
+		$regexes = array_map( 'trim', $regexes ?: array() );
+
+		return array_values(
+			array_filter(
+				$regexes,
+				function ( $regex ) {
+					return '' !== $regex && false !== @preg_match( '/' . $regex . '/', '' );
+				}
+			)
+		);
+	}
+
+	function get_song_library_exclusion_regexes() {
+		return sanitize_song_library_exclusion_regexes( \get_option( 'song_library_exclusion_regexes', array() ) );
 	}
 
 	function sanitize_song_list_recipient_roles( $value ) {
@@ -75,6 +93,15 @@ if ( ! function_exists( __NAMESPACE__ . '\register_settings' ) ) {
 		);
 		register_setting(
 			'settings_group',
+			'song_library_exclusion_regexes',
+			array(
+				'type' => 'array',
+				'sanitize_callback' => __NAMESPACE__ . '\\sanitize_song_library_exclusion_regexes',
+				'default' => array(),
+			)
+		);
+		register_setting(
+			'settings_group',
 			'song_list_recipient_roles',
 			array(
 				'type' => 'array',
@@ -103,6 +130,14 @@ if ( ! function_exists( __NAMESPACE__ . '\register_settings' ) ) {
 			'song_library_directory',
 			__( 'Song library directory', 'dmbc-extras' ),
 			__NAMESPACE__ . '\render_song_library_directory_field',
+			'settings',
+			'general_section'
+		);
+
+		add_settings_field(
+			'song_library_exclusion_regexes',
+			__( 'Song library exclusion regexes', 'dmbc-extras' ),
+			__NAMESPACE__ . '\\render_song_library_exclusion_regexes_field',
 			'settings',
 			'general_section'
 		);
@@ -198,6 +233,17 @@ if ( ! function_exists( __NAMESPACE__ . '\register_settings' ) ) {
 		<?php
 	}
 
+	function render_song_library_exclusion_regexes_field() {
+		$value = implode( "\n", get_song_library_exclusion_regexes() );
+		?>
+		<textarea name="song_library_exclusion_regexes" id="song_library_exclusion_regexes" rows="5"
+			class="large-text code"><?php echo esc_textarea( $value ); ?></textarea>
+		<p class="description">
+			<?php esc_html_e( 'Enter one regular expression per line. Matching song folders are excluded from the song selector.', 'dmbc-extras' ); ?>
+		</p>
+		<?php
+	}
+
 	function render_song_list_recipient_roles_field() {
 		$selected_roles = get_song_list_recipient_roles();
 		$roles = \wp_roles()->roles;
@@ -228,17 +274,19 @@ if ( ! function_exists( __NAMESPACE__ . '\register_settings' ) ) {
 		<?php
 	}
 
-	function render_settings_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+	function dmbc_render_settings_page() {
+		if ( ! current_user_can( 'manage_options' ) and ! current_user_can( 'edit_song_list' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'dmbc-extras' ) );
 		}
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'DMBc Extras Settings', 'dmbc-extras' ); ?></h1>
+			<h1><?php esc_html_e( 'DMBC Extras Settings', 'dmbc-extras' ); ?></h1>
 			<form method="post" action="options.php">
-				<?php settings_fields( 'settings_group' ); ?>
-				<?php do_settings_sections( 'settings' ); ?>
-				<?php submit_button(); ?>
+				<?php
+				settings_fields( 'settings_group' );
+				do_settings_sections( 'settings' );
+				submit_button();
+				?>
 			</form>
 		</div>
 		<?php
