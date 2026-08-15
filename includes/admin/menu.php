@@ -6,13 +6,13 @@ if ( ! \defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-function dmbc_extras_add_admin_menu() {
+function add_admin_menu() {
 	add_menu_page(
 		__( 'Rehearsal Song Lists', 'dmbc-extras' ),
 		__( 'Rehearsal Songs', 'dmbc-extras' ),
 		'view_song_lists',
 		'dmbc-rehearsal-song-lists',
-		__NAMESPACE__ . '\dmbc_extras_render_member_song_lists_page',
+		__NAMESPACE__ . '\dmbc_render_member_song_lists_page',
 		'dashicons-list-view',
 		25
 	);
@@ -23,7 +23,7 @@ function dmbc_extras_add_admin_menu() {
 		__( 'All', 'dmbc-extras' ),
 		'view_song_lists',
 		'dmbc-rehearsal-song-lists',
-		__NAMESPACE__ . '\dmbc_extras_render_member_song_lists_page'
+		__NAMESPACE__ . '\dmbc_render_member_song_lists_page'
 	);
 
 	add_submenu_page(
@@ -32,7 +32,7 @@ function dmbc_extras_add_admin_menu() {
 		__( 'Add Song List', 'dmbc-extras' ),
 		'view_song_lists',
 		'dmbc-rehearsal-song-list-add',
-		__NAMESPACE__ . '\dmbc_extras_render_song_lists_admin_page'
+		__NAMESPACE__ . '\dmbc_render_song_lists_admin_page'
 	);
 
 	add_submenu_page(
@@ -41,6 +41,6 @@ function dmbc_extras_add_admin_menu() {
 		__( 'DMBC Extras', 'dmbc-extras' ),
 		'manage_options',
 		'dmbc-extras-settings',
-		__NAMESPACE__ . '\dmbc_extras_render_settings_page'
+		__NAMESPACE__ . '\dmbc_render_settings_page'
 	);
 }

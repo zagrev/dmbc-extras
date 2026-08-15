@@ -29,15 +29,13 @@ class SongListTable extends WP_List_Table {
 	}
 
 	public function column_rehearsal_date( $item ) {
-		$actions = array(
-			'edit' => sprintf( '<a href="?page=%s&action=%s&song_list_id=%s">Edit</a>', $_REQUEST['page'], 'edit', $item->ID ),
-		);
+		$actions = array();
 		if ( \current_user_can( 'edit_song_list' ) ) {
+			$actions['edit'] = sprintf( '<a href="?page=%s&action=%s&song_list_id=%s">Edit</a>',
+				$_REQUEST['page'], 'edit', $item->ID );
 			$actions['delete'] = sprintf( '<a href="?page=%s&action=%s&song_list_id=%s">Delete</a>',
-				$_REQUEST['page'],
-				'delete',
-				$item->ID
-			);
+				$_REQUEST['page'], 'delete', $item->ID );
+
 		}
 		// Return rehearsal date with row actions
 		$base_url = \is_admin() ? \admin_url( 'admin.php?page=dmbc-rehearsal-song-lists' ) : \get_permalink();

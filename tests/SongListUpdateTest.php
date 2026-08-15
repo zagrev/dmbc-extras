@@ -71,7 +71,7 @@ class SongListUpdateTest extends DmbcTestCase {
 			'dmbc_song_list_songs' => $expected_song_list,
 		);
 
-		\dmbc_extras\dmbc_extras_handle_song_list_form();
+		\dmbc_extras\handle_song_list_form();
 
 		$this->assertArrayHasKey( 'ID', $post_data );
 		$this->assertSame( 5, $post_data['ID'] );

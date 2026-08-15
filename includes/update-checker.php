@@ -16,7 +16,7 @@ if ( ! class_exists( 'Puc_v5_Factory' ) ) {
 
 use YahnisElsts\PluginUpdateChecker\v5p7\PucFactory;
 
-function dmbc_extras_setup_update_checker() {
+function setup_update_checker() {
 	global $plugin_dir;
 
 	$github_repo = 'https://github.com/zagrev/dmbc-extras';
@@ -31,7 +31,7 @@ function dmbc_extras_setup_update_checker() {
 	$updateChecker->setBranch( 'main' );
 }
 
-function dmbc_extras_allow_automatic_plugin_updates( $should_update, $item ) {
+function allow_automatic_plugin_updates( $should_update, $item ) {
 	if ( isset( $item->slug ) && 'dmbc-extras' === $item->slug ) {
 		return true;
 	}
@@ -39,5 +39,5 @@ function dmbc_extras_allow_automatic_plugin_updates( $should_update, $item ) {
 	return $should_update;
 }
 
-\add_action( 'admin_init', __NAMESPACE__ . '\dmbc_extras_setup_update_checker' );
-\add_filter( 'auto_update_plugin', __NAMESPACE__ . '\dmbc_extras_allow_automatic_plugin_updates', 10, 2 );
+\add_action( 'admin_init', __NAMESPACE__ . '\setup_update_checker' );
+\add_filter( 'auto_update_plugin', __NAMESPACE__ . '\allow_automatic_plugin_updates', 10, 2 );

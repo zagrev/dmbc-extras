@@ -80,7 +80,7 @@ class SongListFormHandlerTest extends DmbcTestCase {
 			return $text;
 		} );
 
-		\dmbc_extras\dmbc_extras_handle_song_list_form();
+		\dmbc_extras\handle_song_list_form();
 
 		// expecting a post like this:
 		// $post_data = array(
@@ -193,7 +193,7 @@ class SongListFormHandlerTest extends DmbcTestCase {
 			'dmbc_song_list_songs' => $expected_song_list,
 		);
 
-		\dmbc_extras\dmbc_extras_handle_song_list_form();
+		\dmbc_extras\handle_song_list_form();
 
 		$this->assertArrayHasKey( 'ID', $post_data );
 		$this->assertSame( 5, $post_data['ID'] );
@@ -246,7 +246,7 @@ class SongListFormHandlerTest extends DmbcTestCase {
 				}
 			);
 
-		$this->assertTrue( \dmbc_extras\dmbc_extras_send_song_list_to_role( 12, 'chorus_member' ) );
+		$this->assertTrue( \dmbc_extras\send_song_list_to_role( 12, 'chorus_member' ) );
 		$this->assertSame( [ 'member@example.com' ], $recipients );
 		$this->assertSame( 'Rehearsal song list: Spring Rehearsal', $subject );
 		$this->assertStringContainsString( 'Rehearsal date: 2026-09-15', $message );
@@ -289,7 +289,7 @@ class SongListFormHandlerTest extends DmbcTestCase {
 			'dmbc_song_list_delete_nonce' => 'delete-nonce',
 		);
 
-		\dmbc_extras\dmbc_extras_handle_song_list_form();
+		\dmbc_extras\handle_song_list_form();
 
 		$this->assertNotNull( $captured_callback, 'The delete admin notice callback was not registered.' );
 		ob_start();

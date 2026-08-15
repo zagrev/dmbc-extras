@@ -6,7 +6,7 @@ if ( ! \defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-function dmbc_extras_uninstall() {
+function uninstall() {
 
 	\add_action(
 		'admin_notices',

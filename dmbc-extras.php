@@ -34,6 +34,7 @@ $plugin_dir = plugin_dir_path( __FILE__ );
 $plugin_url = plugin_dir_url( __FILE__ );
 
 require_once "$plugin_dir/includes/admin/menu.php";
+require_once "$plugin_dir/includes/render/song-list.php";
 require_once "$plugin_dir/includes/dmbc_classes.php";
 require_once "$plugin_dir/includes/activate.php";
 require_once "$plugin_dir/includes/deactivate.php";
@@ -44,13 +45,13 @@ require_once "$plugin_dir/includes/song-lists-page.php";
 require_once "$plugin_dir/includes/cpts/song-list-cpt.php";
 require_once "$plugin_dir/includes/update-checker.php";
 
-\register_activation_hook( "$plugin_dir/includes/activate.php", __NAMESPACE__ . '\dmbc_extras_activate' );
-\register_deactivation_hook( "$plugin_dir/includes/deactivate.php", __NAMESPACE__ . '\dmbc_extras_deactivate' );
-\register_uninstall_hook( "$plugin_dir/includes/uninstall.php", __NAMESPACE__ . '\dmbc_extras_uninstall' );
+\register_activation_hook( "$plugin_dir/includes/activate.php", __NAMESPACE__ . '\activate' );
+\register_deactivation_hook( "$plugin_dir/includes/deactivate.php", __NAMESPACE__ . '\deactivate' );
+\register_uninstall_hook( "$plugin_dir/includes/uninstall.php", __NAMESPACE__ . '\uninstall' );
 
-\add_action( 'init', __NAMESPACE__ . '\dmbc_extras_register_song_list_post_type' );
-\add_action( 'init', __NAMESPACE__ . '\dmbc_extras_add_custom_capabilities' );
-\add_shortcode( 'dmbc_rehearsal_song_lists', __NAMESPACE__ . '\dmbc_extras_render_member_song_lists_page' );
+\add_action( 'init', __NAMESPACE__ . '\register_song_list_post_type' );
+\add_action( 'init', __NAMESPACE__ . '\add_custom_capabilities' );
+\add_shortcode( 'dmbc_rehearsal_song_lists', __NAMESPACE__ . '\dmbc_render_member_song_lists_page' );
 \add_shortcode( 'dmbc_song_list_view', function ( $atts ) {
 	$atts = shortcode_atts(
 		array(
@@ -61,8 +62,8 @@ require_once "$plugin_dir/includes/update-checker.php";
 		'dmbc_song_list_view'
 	);
 
-	return dmbc_extras_render_song_list_view_page( absint( $atts['id'] ) );
+	return dmbc_render_song_list_view_page( absint( $atts['id'] ) );
 } );
-\add_action( 'admin_menu', __NAMESPACE__ . '\dmbc_extras_add_admin_menu' );
-\add_action( 'admin_init', __NAMESPACE__ . '\dmbc_extras_register_settings' );
-\add_action( 'admin_init', __NAMESPACE__ . '\dmbc_extras_handle_song_list_form' );
+\add_action( 'admin_menu', __NAMESPACE__ . '\add_admin_menu' );
+\add_action( 'admin_init', __NAMESPACE__ . '\register_settings' );
+\add_action( 'admin_init', __NAMESPACE__ . '\handle_song_list_form' );

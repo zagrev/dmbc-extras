@@ -13,7 +13,7 @@ if ( ! \defined( 'ABSPATH' ) ) {
  * @param string $referrer URL to redirect to after displaying the error.
  * @return void
  */
-function dmbc_extras_admin_error( $message, $referrer ) {
+function admin_error( $message, $referrer ) {
 	if ( ! isset( $_GET['dmbc_error_msg'] ) ) {
 		return;
 	}

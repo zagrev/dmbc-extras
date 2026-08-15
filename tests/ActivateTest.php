@@ -28,16 +28,16 @@ class ActivateTest extends DmbcTestCase {
 			}
 		);
 
-		\dmbc_extras\dmbc_extras_add_custom_capabilities();
+		\dmbc_extras\add_custom_capabilities();
 
 		$expected_role_name = 'edit_song_list';
 		$this->assertTrue(
 			$admin_role->capabilities[ $expected_role_name ] === [ 'administrator' ],
-			'The administrator role should have the edit_song_list capability after calling dmbc_extras_add_custom_capabilities().'
+			'The administrator role should have the edit_song_list capability after calling add_custom_capabilities().'
 		);
 		$this->assertTrue(
 			$editor_role->capabilities[ $expected_role_name ] === [ 'editor' ],
-			'The editor role should have the edit_song_list capability after calling dmbc_extras_add_custom_capabilities().'
+			'The editor role should have the edit_song_list capability after calling add_custom_capabilities().'
 		);
 	}
 }

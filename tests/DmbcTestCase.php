@@ -54,7 +54,7 @@ class DmbcTestCase extends TestCase {
 	public function create_song_list_mocks(): void {
 		expect( 'get_option' )
 			->zeroOrMoreTimes()
-			->with( 'dmbc_extras_song_library_directory', 'dmbc-song-library' )
+			->with( 'song_library_directory', 'dmbc-song-library' )
 			->andReturn( $this->song_list_directory );
 	}
 }
