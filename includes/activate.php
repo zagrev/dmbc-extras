@@ -7,12 +7,17 @@ if ( ! \defined( 'ABSPATH' ) ) {
 }
 
 function dmbc_extras_add_custom_capabilities() {
-	$roles = [ 'administrator', 'editor' ];
-
-	foreach ( $roles as $role_name ) {
+	foreach ( [ 'administrator', 'editor', 'um_director' ] as $role_name ) {
 		$role = \get_role( $role_name );
 		if ( $role ) {
 			$role->add_cap( 'edit_song_list' );
+			$role->add_cap( 'view_song_lists' );
+		}
+	}
+	foreach ( [ 'um_member' ] as $role_name ) {
+		$role = \get_role( $role_name );
+		if ( $role ) {
+			$role->add_cap( 'view_song_lists' );
 		}
 	}
 }

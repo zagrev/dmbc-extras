@@ -38,8 +38,9 @@ require_once "$plugin_dir/includes/dmbc_classes.php";
 require_once "$plugin_dir/includes/activate.php";
 require_once "$plugin_dir/includes/deactivate.php";
 require_once "$plugin_dir/includes/admin/settings.php";
+require_once "$plugin_dir/includes/admin/error.php";
 require_once "$plugin_dir/includes/admin/song-list-form-handler.php";
-require_once "$plugin_dir/includes/admin/song-lists-page.php";
+require_once "$plugin_dir/includes/song-lists-page.php";
 require_once "$plugin_dir/includes/cpts/song-list-cpt.php";
 require_once "$plugin_dir/includes/update-checker.php";
 

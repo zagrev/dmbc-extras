@@ -6,13 +6,53 @@ if ( ! \defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/*
+function my_plugin_process_admin_form() {
+	// 1. Perform your data validation or action here
+	$success = false; // Simulate an error occurring
+
+	if ( ! $success ) {
+		// 2. Build the redirect URL with an error flag parameter
+		$redirect_url = add_query_arg( 'my_plugin_error', 'invalid_input', admin_url( 'admin.php?page=my-plugin-page' ) );
+
+		// 3. Redirect safely and exit immediately
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
+}
+add_action( 'admin_post_my_form_action', 'my_plugin_process_admin_form' );
+*/
+
+function dmbc_extras_render_song_list_delete_page() {
+	$_GET['action'] = 'view';
+	$edit_id = isset( $_GET['song_list_id'] ) ? intval( $_GET['song_list_id'] ) : 0;
+	echo dmbc_extras_render_song_list_view_page( $edit_id );
+	?>
+	<form method="post" action="" id="dmbc_delete_song_list_form">
+		<?php \wp_nonce_field( 'dmbc_delete_song_list', 'dmbc_song_list_delete_nonce' ); ?>
+		<input type="hidden" name="dmbc_song_list_id" value="<?php echo esc_attr( $edit_id ); ?>">
+		<?php
+		\submit_button(
+			__( 'Delete song list?', 'dmbc-extras' ),
+			'warn large danger btn-danger',
+			'dmbc_delete_song_list',
+			false,
+			'style="background-color:#d63638 !important; border-color:#d63638 !important; color:#fff !important;
+		padding:0.75rem1.25rem; font-size:1rem;"'
+		); ?>
+	</form>
+	<?php
+}
+
+
 function dmbc_extras_handle_delete_song_list_form() {
 	if ( ! isset( $_POST['dmbc_song_list_delete_nonce'] ) || ! \wp_verify_nonce( \sanitize_text_field( \wp_unslash( $_POST['dmbc_song_list_delete_nonce'] ) ), 'dmbc_delete_song_list' ) ) {
 		return;
 	}
 
+
 	if ( ! \current_user_can( 'edit_song_list' ) && ! \current_user_can( 'manage_options' ) ) {
-		return;
+		die( 'You do not have permission to delete this song list.' );
 	}
 
 	$song_list_id = isset( $_POST['dmbc_song_list_id'] ) ? \absint( \wp_unslash( $_POST['dmbc_song_list_id'] ) ) : 0;
@@ -25,6 +65,10 @@ function dmbc_extras_handle_delete_song_list_form() {
 					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Rehearsal song list deleted successfully.', 'dmbc-extras' ) . '</p></div>';
 				}
 			);
+			\add_action( 'admin_init', function () {
+				\wp_safe_redirect( \admin_url( "admin.php?page=dmbc-song-lists" ) );
+				exit;
+			} );
 		}
 		else {
 			\add_action(

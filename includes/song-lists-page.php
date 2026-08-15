@@ -47,22 +47,28 @@ function dmbc_extras_render_member_song_lists_page() {
 	if ( ! \is_user_logged_in() ) {
 		return '<p>Please log in to view the rehearsal song lists.</p>';
 	}
+	ob_start();
 
 	if ( isset( $_GET['song_list_id'] ) ) {
-		return dmbc_extras_render_song_list_view_page( \absint( $_GET['song_list_id'] ) );
+		if ( isset( $_GET['action'] ) && 'edit' === $_GET['action'] ) {
+			echo dmbc_extras_render_song_lists_admin_page();
+		}
+		else if ( isset( $_GET['action'] ) && 'delete' === $_GET['action'] ) {
+			echo dmbc_extras_render_song_list_delete_page();
+		}
 	}
-
-	$table = new SongListTable();
-	$table->prepare_items();
-	ob_start();
-	?>
-	<div class="wrap">
-		<h1><?php esc_html_e( 'Rehearsal Song Lists', 'dmbc-extras' ); ?></h1>
-		<form method="post">
-			<?php $table->display(); ?>
-		</form>
-	</div>
-	<?php
+	else {
+		$table = new SongListTable();
+		$table->prepare_items();
+		?>
+		<div class="wrap">
+			<h1><?php esc_html_e( 'Rehearsal Song Lists', 'dmbc-extras' ); ?></h1>
+			<form method="post">
+				<?php $table->display(); ?>
+			</form>
+		</div>
+		<?php
+	}
 	if ( is_admin() ) {
 		echo ob_get_clean();
 	}
@@ -115,33 +121,17 @@ function dmbc_extras_render_song_list_view_page( $song_list_id = 0, $date = null
 		echo " for "; ?><?php echo esc_html( $rehearsal_date ); ?></h1>
 
 		<?php if ( ! empty( $songs ) ) : ?>
-			<h2><?php esc_html_e( 'Songs', 'dmbc-extras' ); ?></h2>
+			<h2><?php esc_html_e( 'Songs', 'dmbc-extras' );
+			$song_library_dir = dmbc_extras_get_song_library_directory_path();
+			$song_library_path = dmbc_extras_convert_full_path_to_relative( WP_CONTENT_DIR, $song_library_dir );
+			?></h2>
 			<ul>
-				<?php foreach ( $songs as $song ) : ?>
-					<?php $song_path = is_array( $song ) ? implode( '/', $song ) : (string) $song; ?>
-					<?php
-					$song_url_path = $song_path;
-					$normalized_song_path = \wp_normalize_path( $song_path );
-					$song_library_directory = dmbc_extras_get_song_library_directory_option();
-					$normalized_library_directory = \wp_normalize_path( $song_library_directory );
-					if ( ! preg_match( '#^[a-zA-Z]:/#', $normalized_library_directory ) && 0 !== strpos( $normalized_library_directory, '/' ) ) {
-						$normalized_library_directory = \wp_normalize_path( WP_CONTENT_DIR . '/' . $normalized_library_directory );
-					}
-					$normalized_library_path = rtrim( $normalized_library_directory, '/' ) . '/';
-					$song_url_directory = $song_library_directory;
-					$normalized_content_path = rtrim( \wp_normalize_path( WP_CONTENT_DIR ), '/' ) . '/';
-					if ( 0 === strpos( $normalized_library_directory, $normalized_content_path ) ) {
-						$song_url_directory = substr( $normalized_library_directory, strlen( $normalized_content_path ) );
-					}
-					if ( 0 === strpos( $normalized_song_path, $normalized_library_path ) ) {
-						$song_url_path = trim( $song_url_directory . '/' . substr( $normalized_song_path, strlen( $normalized_library_path ) ), '/' );
-					}
-					else {
-						$song_url_path = trim( $song_url_directory . '/' . $song_path, '/' );
-					}
-					$song_url = \content_url( $song_url_path );
+				<?php foreach ( $songs as $song ) :
+					$song_path = is_array( $song ) ? implode( ',', $song ) : (string) $song;
+					$song_url_path = dmbc_extras_convert_full_path_to_relative( WP_CONTENT_DIR, $song_path );
+					$song_url = \content_url( "$song_library_path/$song_url_path" );
 					?>
-					<li><a href="<?php echo \esc_url( $song_url ); ?>"><?php echo esc_html( basename( $song_path ) ); ?></a></li>
+					<li><a href="<?php echo \esc_url( $song_url ); ?>"><?php echo esc_html( $song_path ); ?></a></li>
 				<?php endforeach; ?>
 			</ul>
 		<?php else : ?>
@@ -158,7 +148,7 @@ function dmbc_extras_render_song_list_view_page( $song_list_id = 0, $date = null
  * @return void
  */
 function dmbc_extras_render_song_lists_admin_page() {
-	$edit_id = isset( $_GET['dmbc_song_list_id'] ) ? \absint( \wp_unslash( $_GET['dmbc_song_list_id'] ) ) : 0;
+	$edit_id = isset( $_GET['song_list_id'] ) ? \absint( \wp_unslash( $_GET['song_list_id'] ) ) : 0;
 	$edit_post = $edit_id > 0 ? \get_post( $edit_id ) : null;
 	$edit_title = '';
 	$edit_content = '';
@@ -179,7 +169,8 @@ function dmbc_extras_render_song_lists_admin_page() {
 	$song_folders = dmbc_extras_get_song_folder_choices();
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'Rehearsal Song Lists', 'dmbc-extras' ); ?></h1>
+		<?php $action = $edit_id > 0 ? 'Edit' : 'Add'; ?>
+		<h1><?php esc_html_e( "$action Rehearsal Song List", 'dmbc-extras' ); ?></h1>
 
 		<form method="post" action="">
 			<?php \wp_nonce_field( 'dmbc_create_song_list', 'dmbc_song_list_nonce' ); ?>

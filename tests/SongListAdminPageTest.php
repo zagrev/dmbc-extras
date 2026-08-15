@@ -75,7 +75,7 @@ class SongListAdminPageTest extends DmbcTestCase {
 
 		// verify that this page structure is correct
 		assertTrue( true );
-		$this->assertStringContainsString( 'Rehearsal Song Lists', $output );
+		$this->assertStringContainsString( 'Rehearsal Song List', $output );
 		$this->assertStringContainsString( 'Select Songs', $output );
 		$this->assertStringContainsString( 'Add Selected', $output );
 		$this->assertStringContainsString( 'Remove Selected', $output );
@@ -108,6 +108,7 @@ class SongListAdminPageTest extends DmbcTestCase {
 
 		expect( 'is_user_logged_in' )->zeroOrMoreTimes()->andReturn( true );
 		when( 'is_admin' )->justReturn( false );
+		expect( 'current_user_can' )->with( 'edit_song_list' )->andReturn( true );
 		expect( 'get_posts' )->zeroOrMoreTimes()->andReturn( [ $newer, $older ] );
 		expect( 'get_post_meta' )->zeroOrMoreTimes()->andReturnUsing( function ( $post_id, $key, $single = false ) {
 			if ( 3 === $post_id ) {
@@ -182,6 +183,7 @@ class SongListAdminPageTest extends DmbcTestCase {
 		$this->assertStringContainsString( 'Rehearsal Song Lists', $output );
 		$this->assertStringContainsString( 'Newer List', $output );
 		$this->assertStringContainsString( '2026-09-15', $output );
+		$this->assertStringContainsString( 'action=delete', $output );
 		$this->assertLessThan( strpos( $output, 'Older List' ), strpos( $output, 'Newer List' ) );
 	}
 
