@@ -12,7 +12,7 @@ function add_admin_menu() {
 		__( 'Rehearsal Songs', 'dmbc-extras' ),
 		'view_song_lists',
 		'dmbc-rehearsal-song-lists',
-		__NAMESPACE__ . '\dmbc_render_member_song_lists_page',
+		__NAMESPACE__ . '\render_song_list_table_page',
 		'dashicons-list-view',
 		25
 	);
@@ -23,7 +23,7 @@ function add_admin_menu() {
 		__( 'All', 'dmbc-extras' ),
 		'view_song_lists',
 		'dmbc-rehearsal-song-lists',
-		__NAMESPACE__ . '\dmbc_render_member_song_lists_page'
+		__NAMESPACE__ . '\render_song_list_table_page'
 	);
 
 	add_submenu_page(

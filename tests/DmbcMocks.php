@@ -78,6 +78,53 @@ if ( ! class_exists( 'WP_Post' ) ) {
 	}
 }
 
+if ( ! class_exists( 'WP_List_Table' ) ) {
+	class WP_List_Table {
+		public $items = [];
+		public $_columns = [];
+
+		public function get_columns() {
+			return $this->_columns;
+		}
+		public function row_actions( $item ) {
+			return 'action=';
+		}
+		public function display() {
+			foreach ( $this->items as $item ) {
+				foreach ( $this->get_columns() as $column_name => $attributes ) {
+					if ( \method_exists( $this, 'column_' . $column_name ) ) {
+						echo \call_user_func( array( $this, 'column_' . $column_name ), $item );
+					}
+					else {
+						echo $this->column_default( $item, $column_name );
+					}
+				}
+			}
+		}
+		public function column_default( $item, $column_name ) {
+			return isset( $item->$column_name ) ? $item->$column_name : '';
+		}
+		public function prepare_items() {
+			$this->items = \get_posts();
+		}
+		public function get_items() {
+			return $this->items;
+		}
+		// 		public function set_items( $items ) {
+// 			$this->items = $items;
+// 		}
+		public function get_pagenum() {
+			return 1;
+		}
+		// 		public function get_pagination_args() {
+// 			return [];
+// 		}
+		public function set_pagination_args( $args ) {
+		}
+		// 	}
+	}
+}
+
 // mock basic WordPress functions used in the plugin
 expect( 'absint' )->zeroOrMoreTimes()->andReturnFirstArg();
 

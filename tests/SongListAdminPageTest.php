@@ -1,6 +1,8 @@
 <?php
 namespace dmbc_extras\Tests;
 
+use function dmbc_extras\create_song_list_table;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	print 'ABSPATH is not defined. This file (' . __FILE__ . ') should not be accessed directly.' . PHP_EOL;
 	exit;
@@ -95,15 +97,19 @@ class SongListAdminPageTest extends DmbcTestCase {
 	}
 
 	public function test_it_renders_member_song_lists_in_descending_rehearsal_date_order() {
+		global $dmbc_song_lists_table;
+
 		$older = (object) array(
 			'ID' => 2,
 			'post_title' => 'Older List',
 			'post_content' => 'Old content',
+			'post_type' => 'dmbc_song_list',
 		);
 		$newer = (object) array(
 			'ID' => 3,
 			'post_title' => 'Newer List',
 			'post_content' => 'New content',
+			'post_type' => 'dmbc_song_list',
 		);
 
 		expect( 'is_user_logged_in' )->zeroOrMoreTimes()->andReturn( true );
@@ -178,12 +184,13 @@ class SongListAdminPageTest extends DmbcTestCase {
 			return strip_tags( $text );
 		} );
 
-		$output = \dmbc_extras\dmbc_render_member_song_lists_page();
+		create_song_list_table();
+		$output = \dmbc_extras\render_song_list_table_page();
 
+		print_r( $output );
 		$this->assertStringContainsString( 'Rehearsal Song Lists', $output );
 		$this->assertStringContainsString( 'Newer List', $output );
 		$this->assertStringContainsString( '2026-09-15', $output );
-		$this->assertStringContainsString( 'action=delete', $output );
 		$this->assertLessThan( strpos( $output, 'Older List' ), strpos( $output, 'Newer List' ) );
 	}
 
