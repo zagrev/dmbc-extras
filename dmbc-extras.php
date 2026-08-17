@@ -52,7 +52,7 @@ require_once "$plugin_dir/includes/update-checker.php";
 \add_action( 'init', __NAMESPACE__ . '\register_song_list_post_type' );
 \add_action( 'init', __NAMESPACE__ . '\add_custom_capabilities' );
 
-\add_shortcode( 'dmbc_songlist_list_view', __NAMESPACE__ . '\render_song_list_table_page' );
+\add_shortcode( 'dmbc_songlist_list_view', __NAMESPACE__ . '\dmbc_render_song_list_table_page' );
 \add_shortcode( 'dmbc_songlist_detail_view', function ( $atts, $content = null, $shortcode_tag = '' ) {
 	$atts = shortcode_atts(
 		array(
@@ -65,6 +65,7 @@ require_once "$plugin_dir/includes/update-checker.php";
 
 	return dmbc_render_song_list_view_page( absint( $atts['id'] ) );
 } );
+
 \add_action( 'admin_menu', __NAMESPACE__ . '\add_admin_menu' );
 \add_action( 'admin_init', __NAMESPACE__ . '\register_settings' );
 \add_action( 'admin_init', __NAMESPACE__ . '\handle_song_list_form' );
