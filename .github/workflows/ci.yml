@@ -34,6 +34,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
 
+      - name: Setup Node
+        uses: shivammathur/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Setup PHP
         uses: shivammathur/setup-php@2.37.2
         with:
@@ -61,5 +66,15 @@ jobs:
       - name: PHP syntax check
         run: php -l dmbc-extras.php
 
-      - name: Run PHPUnit
-        run: vendor/bin/phpunit --configuration phpunit.xml.dist
+      - name: Setup PHP
+        uses: shivammathur/setup-php@2.37.2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, wp-cli
+          tools: composer
+
+      - name: Install wp-env globally
+        run: npm install -g @wordpress/env
+
+      - name: Run PHPUnit tests via wp-env
+        run: wp-env run phpunit 'phpunit'
