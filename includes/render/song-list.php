@@ -103,12 +103,14 @@ function render_song_list_table_page() {
 	}
 
 	if ( isset( $_GET['song_list_id'] ) ) {
+		$song_list_id = absint( $_GET['song_list_id'] ) ?? 0;
 		if ( isset( $_GET['action'] ) && 'edit' === $_GET['action'] ) {
 			return dmbc_render_song_lists_admin_page();
 		}
 		else if ( isset( $_GET['action'] ) && 'delete' === $_GET['action'] ) {
 			return dmbc_render_song_list_delete_page();
 		}
+		return render_song_list_edit_page( $song_list_id );
 	}
 	else {
 		return render_member_song_lists_table_page();
