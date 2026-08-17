@@ -77,4 +77,4 @@ jobs:
         run: npm install -g @wordpress/env
 
       - name: Run PHPUnit tests via wp-env
-        run: wp-env run phpunit 'phpunit'
+        run: wp-env run wordpress 'phpunit'
