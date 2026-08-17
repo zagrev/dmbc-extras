@@ -67,7 +67,7 @@ jobs:
         run: php -l dmbc-extras.php
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@2.37.2
+        uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           extensions: mysqli, wp-cli
