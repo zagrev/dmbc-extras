@@ -69,6 +69,7 @@ class SongListAdminPageTest extends DmbcTestCase {
 		expect( 'esc_textarea' )->zeroOrMoreTimes()->andReturnFirstArg();
 		expect( 'get_option' )->zeroOrMoreTimes()->andReturn( 'dmbc-song-library' );
 
+		self::create_test_song_list_directory();
 		$_GET['dmbc_song_list_id'] = 1;
 
 		ob_start();
