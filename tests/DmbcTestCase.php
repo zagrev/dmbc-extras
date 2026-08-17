@@ -24,14 +24,14 @@ class DmbcTestCase extends TestCase {
 		Monkey\setUp();
 
 		$this->starting_level = ob_get_level();
-		$this->song_list_directory = str_replace( '\\', '/', "$plugin_dir/test-song-lists" );
 
+		$this->song_list_directory = str_replace( '\\', '/', "$plugin_dir/test-song-lists" );
 		$this->create_test_song_list_directory();
 		$this->create_song_list_mocks();
 	}
 
 	public function tearDown(): void {
-		if ( ob_get_level() > $this->starting_level ) {
+		while ( ob_get_level() > $this->starting_level ) {
 			ob_end_clean();
 		}
 		Monkey\tearDown();

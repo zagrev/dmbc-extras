@@ -5,7 +5,7 @@ if ( ! function_exists( __NAMESPACE__ . '\register_settings' ) ) {
 	function sanitize_song_library_directory( $value ) {
 		$value = trim( (string) $value );
 		$value = str_replace( '\\', '/', $value );
-		$value = trim( $value, '/ ' );
+		$value = rtrim( $value, '/' );
 
 		return $value;
 	}

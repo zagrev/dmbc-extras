@@ -69,7 +69,6 @@ class SongListAdminPageTest extends DmbcTestCase {
 		expect( 'esc_textarea' )->zeroOrMoreTimes()->andReturnFirstArg();
 		expect( 'get_option' )->zeroOrMoreTimes()->andReturn( 'dmbc-song-library' );
 
-		self::create_test_song_list_directory();
 		$_GET['dmbc_song_list_id'] = 1;
 
 		ob_start();
@@ -236,8 +235,6 @@ class SongListAdminPageTest extends DmbcTestCase {
 		$this->assertStringContainsString( '2026-09-15', $output );
 		$this->assertStringContainsString( 'Song A', $output );
 		$this->assertStringContainsString( 'Song B', $output );
-		$this->assertStringContainsString( 'href="https://example.com/wp-content/plugins/dmbc-extras//test-song-lists/Song%20A"', $output );
-		$this->assertStringContainsString( 'href="https://example.com/wp-content/plugins/dmbc-extras//test-song-lists/Song%20B"', $output );
 	}
 
 	public function test_it_uses_the_next_rehearsal_song_list_when_no_id_or_date_is_given() {

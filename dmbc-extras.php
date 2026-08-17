@@ -30,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$plugin_dir = plugin_dir_path( __FILE__ );
+$plugin_dir = rtrim( wp_normalize_path( plugin_dir_path( __FILE__ ) ), "/" );
 $plugin_url = plugin_dir_url( __FILE__ );
 
 require_once "$plugin_dir/includes/admin/menu.php";
